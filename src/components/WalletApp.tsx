@@ -54,21 +54,28 @@ export default function WalletApp() {
   const handleRevoke = useCallback(async (tokenAddress: string, spender: string, type: 'ERC20' | 'ERC721') => {
     if (!address) return
 
-    // Auto-switch to Kasplex network if not already connected
-    if (!isOnCorrectNetwork) {
-      try {
-        await switchChain({ chainId: defaultChain.id })
-        // Wait a moment for the network switch to complete
-        await new Promise(resolve => setTimeout(resolve, 1000))
-      } catch (error) {
-        toast.error(`Please switch to ${defaultChain.name} network to revoke approvals`)
-        return
-      }
-    }
+    const loadingToast = toast.loading('Preparing to revoke approval...')
 
-    const loadingToast = toast.loading('Revoking approval...')
-    
     try {
+      // Auto-switch to Kasplex network if not already connected
+      if (!isOnCorrectNetwork) {
+        toast.loading('Switching to Kasplex network...', { id: loadingToast })
+        try {
+          await switchChain({ chainId: defaultChain.id })
+          // Wait for the network switch to complete
+          await new Promise(resolve => setTimeout(resolve, 2000))
+          toast.loading('Network switched, revoking approval...', { id: loadingToast })
+        } catch (switchError) {
+          console.error('Network switch failed:', switchError)
+          toast.error(`Failed to switch to ${defaultChain.name} network. Please switch manually.`, { id: loadingToast })
+          return
+        }
+      } else {
+        toast.loading('Revoking approval...', { id: loadingToast })
+      }
+
+      console.log('Attempting to revoke:', { tokenAddress, spender, type, chainId: defaultChain.id })
+      
       let hash: `0x${string}`
       
       if (type === 'ERC20') {
@@ -89,27 +96,40 @@ export default function WalletApp() {
         })
       }
 
+      console.log('Transaction submitted:', hash)
+      toast.loading('Waiting for confirmation...', { id: loadingToast })
+
       await waitForTransactionReceipt(config, { hash, chainId: defaultChain.id })
+      
+      console.log('Transaction confirmed:', hash)
       
       // Remove the revoked approval from state
       setApprovals(prev => prev.filter(approval => 
         !(approval.tokenAddress === tokenAddress && approval.spender === spender)
       ))
       
-      toast.success('Approval revoked successfully', { id: loadingToast })
+      toast.success('Approval revoked successfully!', { id: loadingToast })
     } catch (error) {
+      console.error('Revoke error:', error)
+      
       let errorMessage = 'Failed to revoke approval'
       
       if (error instanceof Error) {
+        console.error('Error details:', error.message, error.stack)
+        
         // Handle specific error types for better UX
-        if (error.message.includes('User rejected') || error.message.includes('User denied')) {
-          errorMessage = 'Transaction was cancelled'
+        if (error.message.includes('User rejected') || error.message.includes('User denied') || error.message.includes('rejected')) {
+          errorMessage = 'Transaction was cancelled by user'
         } else if (error.message.includes('insufficient funds')) {
-          errorMessage = 'Insufficient funds for transaction'
-        } else if (error.message.includes('network')) {
-          errorMessage = 'Network error, please try again'
+          errorMessage = 'Insufficient funds for gas fees'
+        } else if (error.message.includes('network') || error.message.includes('connection')) {
+          errorMessage = 'Network connection error, please try again'
         } else if (error.message.includes('timeout')) {
           errorMessage = 'Transaction timed out, please try again'
+        } else if (error.message.includes('chainId')) {
+          errorMessage = 'Wrong network - please ensure you are on Kasplex'
+        } else {
+          errorMessage = `Error: ${error.message}`
         }
       }
       
