@@ -27,6 +27,6 @@ export const kasplex = defineChain({
   testnet: process.env.NEXT_PUBLIC_ENVIRONMENT === 'development',
 })
 
-export const supportedChains = [kasplex]
+export const supportedChains = [kasplex] as const
 
 export const defaultChain = kasplex
