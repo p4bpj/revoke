@@ -27,6 +27,87 @@ const DANGEROUS_SPENDERS = new Set([
   // Add more known dangerous addresses
 ])
 
+// Helper function to process indexed NFT approvals
+async function processIndexedNFTApprovals(
+  nftApprovals: any[],
+  operatorApprovals: any[],
+  userAddress: string,
+  chainId: number
+): Promise<TokenApproval[]> {
+  const client = getPublicClient(config, { chainId: chainId as 167012 })
+  if (!client) throw new Error('No public client available')
+
+  const allApprovals: TokenApproval[] = []
+  
+  // Process individual NFT approvals
+  for (const approval of nftApprovals) {
+    try {
+      // Get contract metadata
+      const [name, symbol] = await Promise.all([
+        readContract(config, {
+          address: approval.contract_address as `0x${string}`,
+          abi: ERC721_ABI,
+          functionName: 'name',
+        }).catch(() => 'NFT Collection'),
+        readContract(config, {
+          address: approval.contract_address as `0x${string}`,
+          abi: ERC721_ABI,
+          functionName: 'symbol',
+        }).catch(() => undefined)
+      ])
+
+      allApprovals.push({
+        id: `nft-${getAddress(approval.contract_address)}-${approval.token_id}-${getAddress(approval.approved)}`,
+        type: 'ERC721',
+        tokenAddress: getAddress(approval.contract_address),
+        tokenName: name as string,
+        tokenSymbol: symbol as string,
+        spender: getAddress(approval.approved),
+        allowance: `Token #${approval.token_id}`,
+        lastUpdated: new Date(approval.updated_at),
+        isDangerous: DANGEROUS_SPENDERS.has(approval.approved.toLowerCase()),
+      })
+    } catch (error) {
+      console.warn(`Failed to process NFT approval for ${approval.contract_address}:`, error)
+    }
+  }
+
+  // Process operator approvals (setApprovalForAll)
+  for (const approval of operatorApprovals) {
+    try {
+      // Get contract metadata
+      const [name, symbol] = await Promise.all([
+        readContract(config, {
+          address: approval.contract_address as `0x${string}`,
+          abi: ERC721_ABI,
+          functionName: 'name',
+        }).catch(() => 'NFT Collection'),
+        readContract(config, {
+          address: approval.contract_address as `0x${string}`,
+          abi: ERC721_ABI,
+          functionName: 'symbol',
+        }).catch(() => undefined)
+      ])
+
+      allApprovals.push({
+        id: `nft-operator-${getAddress(approval.contract_address)}-${getAddress(approval.operator)}`,
+        type: 'ERC721',
+        tokenAddress: getAddress(approval.contract_address),
+        tokenName: name as string,
+        tokenSymbol: symbol as string,
+        spender: getAddress(approval.operator),
+        allowance: 'All NFTs',
+        lastUpdated: new Date(approval.updated_at),
+        isDangerous: DANGEROUS_SPENDERS.has(approval.operator.toLowerCase()),
+      })
+    } catch (error) {
+      console.warn(`Failed to process operator approval for ${approval.contract_address}:`, error)
+    }
+  }
+
+  return allApprovals
+}
+
 export async function fetchERC20Approvals(
   userAddress: string,
   chainId: number
@@ -187,6 +268,31 @@ export async function fetchNFTApprovals(
   userAddress: string,
   chainId: number
 ): Promise<TokenApproval[]> {
+  // Try to fetch from indexer API first
+  try {
+    const [nftRes, operatorRes] = await Promise.all([
+      fetch(`/api/nft-approvals?owner=${userAddress}`, { cache: 'no-store' }),
+      fetch(`/api/operator-approvals?owner=${userAddress}`, { cache: 'no-store' })
+    ])
+    
+    if (nftRes.ok && operatorRes.ok) {
+      const [nftData, operatorData] = await Promise.all([
+        nftRes.json(),
+        operatorRes.json()
+      ])
+      
+      const nftApprovals = nftData.approvals || []
+      const operatorApprovals = operatorData.approvals || []
+      
+      // Process indexed NFT approvals and operator approvals
+      const indexedApprovals = await processIndexedNFTApprovals(nftApprovals, operatorApprovals, userAddress, chainId)
+      return indexedApprovals
+    }
+  } catch (apiError) {
+    console.error('NFT Indexer API error, falling back to on-chain scan:', apiError)
+  }
+
+  // Fallback to on-chain scan if API fails
   const client = getPublicClient(config, { chainId: chainId as 167012 })
   if (!client) throw new Error('No public client available')
 
