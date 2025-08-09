@@ -76,7 +76,7 @@ export function AllowanceTable({
         <Shield className="w-16 h-16 text-green-500 mx-auto mb-4" />
         <h3 className="text-xl font-semibold text-gray-900 mb-2">No Active Approvals</h3>
         <p className="text-gray-600">
-          Great! You don't have any active token allowances or NFT approvals.
+          Great! You don&apos;t have any active token allowances or NFT approvals.
         </p>
       </div>
     )

@@ -1,0 +1,8 @@
+[build]
+builder = "dockerfile"
+
+[deploy]
+startCommand = "./indexer"
+
+[variables]
+# Environment variables will be set in Railway dashboard
