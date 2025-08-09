@@ -48,12 +48,14 @@ export default function WalletApp() {
   const handleRevoke = useCallback(async (tokenAddress: string, spender: string, type: 'ERC20' | 'ERC721') => {
     if (!address) return
 
+    console.log('Attempting to revoke:', { tokenAddress, spender, type, address })
     const loadingToast = toast.loading('Revoking approval...')
     
     try {
       let hash: `0x${string}`
       
       if (type === 'ERC20') {
+        console.log('Calling writeContract for ERC20 approve')
         hash = await writeContract(config, {
           address: tokenAddress as `0x${string}`,
           abi: ERC20_ABI,
@@ -61,6 +63,7 @@ export default function WalletApp() {
           args: [spender as `0x${string}`, BigInt(0)],
         })
       } else {
+        console.log('Calling writeContract for ERC721 setApprovalForAll')
         hash = await writeContract(config, {
           address: tokenAddress as `0x${string}`,
           abi: ERC721_ABI,
@@ -69,6 +72,7 @@ export default function WalletApp() {
         })
       }
 
+      console.log('Transaction hash:', hash)
       await waitForTransactionReceipt(config, { hash })
       
       // Remove the revoked approval from state
@@ -78,6 +82,7 @@ export default function WalletApp() {
       
       toast.success('Approval revoked successfully', { id: loadingToast })
     } catch (error) {
+      console.error('Revoke error:', error)
       const errorMsg = error instanceof Error ? error.message : 'Failed to revoke approval'
       toast.error(errorMsg, { id: loadingToast })
     }
