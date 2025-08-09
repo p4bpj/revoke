@@ -2,7 +2,7 @@ import { defineChain } from 'viem'
 
 // Kasplex chain configuration - replace with actual Kasplex network details
 export const kasplex = defineChain({
-  id: parseInt(process.env.NEXT_PUBLIC_CHAIN_ID || '1337'),
+  id: 1337,
   name: 'Kasplex',
   network: 'kasplex',
   nativeCurrency: {
@@ -24,7 +24,7 @@ export const kasplex = defineChain({
       url: 'https://frontend.kasplextest.xyz',
     },
   },
-  testnet: process.env.NEXT_PUBLIC_ENVIRONMENT === 'development',
+  testnet: true,
 })
 
 export const supportedChains = [kasplex] as const

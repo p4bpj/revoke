@@ -28,24 +28,20 @@ export default function WalletApp() {
   const currentChainName = chainId === 1 ? 'Ethereum' : chainId === 137 ? 'Polygon' : chainId === 56 ? 'BNB Chain' : `Chain ${chainId}`
 
   const handleScan = useCallback(async () => {
-    if (!address || !chainId) {
+    if (!address) {
       toast.error('Please connect your wallet first')
-      return
-    }
-
-    if (!isOnCorrectNetwork) {
-      toast.error(`Please switch to ${defaultChain.name} network to scan approvals`)
       return
     }
     
     setIsLoading(true)
     setError(null)
-    const loadingToast = toast.loading('Scanning blockchain for approvals...')
+    const loadingToast = toast.loading('Scanning Kasplex blockchain for approvals...')
     
     try {
-      const fetchedApprovals = await fetchAllApprovals(address, chainId)
+      // Always scan on Kasplex network (1337) regardless of connected network
+      const fetchedApprovals = await fetchAllApprovals(address, defaultChain.id)
       setApprovals(fetchedApprovals)
-      toast.success(`Found ${fetchedApprovals.length} active approvals`, { id: loadingToast })
+      toast.success(`Found ${fetchedApprovals.length} active approvals on Kasplex`, { id: loadingToast })
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Failed to scan approvals'
       setError(errorMsg)
@@ -53,14 +49,21 @@ export default function WalletApp() {
     } finally {
       setIsLoading(false)
     }
-  }, [address, chainId, isOnCorrectNetwork])
+  }, [address])
 
   const handleRevoke = useCallback(async (tokenAddress: string, spender: string, type: 'ERC20' | 'ERC721') => {
     if (!address) return
 
+    // Auto-switch to Kasplex network if not already connected
     if (!isOnCorrectNetwork) {
-      toast.error(`Please switch to ${defaultChain.name} network to revoke approvals`)
-      return
+      try {
+        await switchChain({ chainId: defaultChain.id })
+        // Wait a moment for the network switch to complete
+        await new Promise(resolve => setTimeout(resolve, 1000))
+      } catch (error) {
+        toast.error(`Please switch to ${defaultChain.name} network to revoke approvals`)
+        return
+      }
     }
 
     const loadingToast = toast.loading('Revoking approval...')
@@ -216,11 +219,11 @@ export default function WalletApp() {
           <div className="flex gap-3">
             <button
               onClick={handleScan}
-              disabled={isLoading || !isOnCorrectNetwork}
-              className={`btn-primary flex items-center gap-2 ${!isOnCorrectNetwork ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={isLoading}
+              className="btn-primary flex items-center gap-2"
             >
               {isLoading ? <LoadingSpinner size="sm" /> : <Scan className="w-4 h-4" />}
-              {isLoading ? 'Scanning...' : 'Scan Approvals'}
+              {isLoading ? 'Scanning...' : 'Scan Kasplex Approvals'}
             </button>
             <button
               onClick={() => disconnect()}
