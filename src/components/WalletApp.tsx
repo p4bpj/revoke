@@ -188,7 +188,7 @@ export default function WalletApp() {
             <div className="flex-1">
               <p className="text-orange-800 font-medium">Wrong Network</p>
               <p className="text-orange-700 text-sm">
-                You're connected to {currentChainName}. Please switch to {defaultChain.name} to use this app.
+                You&apos;re connected to {currentChainName}. Please switch to {defaultChain.name} to use this app.
               </p>
             </div>
             <button
