@@ -109,7 +109,7 @@ export async function fetchERC20Approvals(
   }
 
   // Fallback to on-chain scan if API fails
-  const client = getPublicClient(config, { chainId })
+  const client = getPublicClient(config, { chainId: chainId as 1337 })
   if (!client) throw new Error('No public client available')
 
   try {
@@ -187,7 +187,7 @@ export async function fetchNFTApprovals(
   userAddress: string,
   chainId: number
 ): Promise<TokenApproval[]> {
-  const client = getPublicClient(config, { chainId })
+  const client = getPublicClient(config, { chainId: chainId as 1337 })
   if (!client) throw new Error('No public client available')
 
   try {
