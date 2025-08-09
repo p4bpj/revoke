@@ -77,6 +77,7 @@ export default function WalletApp() {
           abi: ERC20_ABI,
           functionName: 'approve',
           args: [spender as `0x${string}`, BigInt(0)],
+          chainId: defaultChain.id,
         })
       } else {
         hash = await writeContract(config, {
@@ -84,10 +85,11 @@ export default function WalletApp() {
           abi: ERC721_ABI,
           functionName: 'setApprovalForAll',
           args: [spender as `0x${string}`, false],
+          chainId: defaultChain.id,
         })
       }
 
-      await waitForTransactionReceipt(config, { hash })
+      await waitForTransactionReceipt(config, { hash, chainId: defaultChain.id })
       
       // Remove the revoked approval from state
       setApprovals(prev => prev.filter(approval => 
