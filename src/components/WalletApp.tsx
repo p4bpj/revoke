@@ -48,14 +48,12 @@ export default function WalletApp() {
   const handleRevoke = useCallback(async (tokenAddress: string, spender: string, type: 'ERC20' | 'ERC721') => {
     if (!address) return
 
-    console.log('Attempting to revoke:', { tokenAddress, spender, type, address })
     const loadingToast = toast.loading('Revoking approval...')
     
     try {
       let hash: `0x${string}`
       
       if (type === 'ERC20') {
-        console.log('Calling writeContract for ERC20 approve')
         hash = await writeContract(config, {
           address: tokenAddress as `0x${string}`,
           abi: ERC20_ABI,
@@ -63,7 +61,6 @@ export default function WalletApp() {
           args: [spender as `0x${string}`, BigInt(0)],
         })
       } else {
-        console.log('Calling writeContract for ERC721 setApprovalForAll')
         hash = await writeContract(config, {
           address: tokenAddress as `0x${string}`,
           abi: ERC721_ABI,
@@ -72,7 +69,6 @@ export default function WalletApp() {
         })
       }
 
-      console.log('Transaction hash:', hash)
       await waitForTransactionReceipt(config, { hash })
       
       // Remove the revoked approval from state
@@ -82,9 +78,22 @@ export default function WalletApp() {
       
       toast.success('Approval revoked successfully', { id: loadingToast })
     } catch (error) {
-      console.error('Revoke error:', error)
-      const errorMsg = error instanceof Error ? error.message : 'Failed to revoke approval'
-      toast.error(errorMsg, { id: loadingToast })
+      let errorMessage = 'Failed to revoke approval'
+      
+      if (error instanceof Error) {
+        // Handle specific error types for better UX
+        if (error.message.includes('User rejected') || error.message.includes('User denied')) {
+          errorMessage = 'Transaction was cancelled'
+        } else if (error.message.includes('insufficient funds')) {
+          errorMessage = 'Insufficient funds for transaction'
+        } else if (error.message.includes('network')) {
+          errorMessage = 'Network error, please try again'
+        } else if (error.message.includes('timeout')) {
+          errorMessage = 'Transaction timed out, please try again'
+        }
+      }
+      
+      toast.error(errorMessage, { id: loadingToast })
     }
   }, [address])
 
@@ -103,6 +112,7 @@ export default function WalletApp() {
     const loadingToast = toast.loading('Revoking all approvals...')
     let successCount = 0
     let errorCount = 0
+    let cancelledCount = 0
 
     try {
       for (const approval of approvals) {
@@ -112,12 +122,19 @@ export default function WalletApp() {
           // Small delay to avoid overwhelming the network
           await new Promise(resolve => setTimeout(resolve, 1000))
         } catch (error) {
-          errorCount++
-          console.error(`Failed to revoke ${approval.tokenName}:`, error)
+          if (error instanceof Error && (error.message.includes('User rejected') || error.message.includes('User denied'))) {
+            cancelledCount++
+            // If user cancels one transaction, stop the bulk operation
+            break
+          } else {
+            errorCount++
+          }
         }
       }
       
-      if (errorCount === 0) {
+      if (cancelledCount > 0) {
+        toast.error('Bulk revoke cancelled by user', { id: loadingToast })
+      } else if (errorCount === 0) {
         toast.success(`All ${successCount} approvals revoked successfully`, { id: loadingToast })
       } else {
         toast.success(`${successCount} approvals revoked, ${errorCount} failed`, { id: loadingToast })
