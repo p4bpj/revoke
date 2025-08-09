@@ -104,7 +104,7 @@ export async function fetchERC20Approvals(
 
   try {
     const latestBlock = await client.getBlockNumber()
-    const fromBlock = latestBlock - 50000n
+    const fromBlock = latestBlock - BigInt(50000)
     const logs = await client.getLogs({
       address: undefined,
       event: parseAbiItem('event Approval(address indexed owner, address indexed spender, uint256 value)'),
@@ -145,7 +145,7 @@ export async function fetchERC20Approvals(
           decimalsResult.status === 'success'
         ) {
           const allowance = allowanceResult.result as bigint
-          if (allowance > 0n) {
+          if (allowance > BigInt(0)) {
             const decimals = decimalsResult.result as number
             approvals.push({
               id: `erc20-${tokenAddress}-${spender}`,
@@ -181,7 +181,7 @@ export async function fetchNFTApprovals(
 
   try {
     const latestBlock = await client.getBlockNumber()
-    const fromBlock = latestBlock - 50000n
+    const fromBlock = latestBlock - BigInt(50000)
 
     // Fetch ApprovalForAll events
     const logs = await client.getLogs({

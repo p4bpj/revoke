@@ -58,7 +58,7 @@ export default function WalletApp() {
           address: tokenAddress as `0x${string}`,
           abi: ERC20_ABI,
           functionName: 'approve',
-          args: [spender as `0x${string}`, 0n],
+          args: [spender as `0x${string}`, BigInt(0)],
         })
       } else {
         hash = await writeContract(config, {
