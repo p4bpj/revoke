@@ -1,0 +1,28 @@
+# Kasplex RPC Configuration
+# Replace with your actual Kasplex RPC endpoint
+NEXT_PUBLIC_RPC_URL=https://your-kasplex-rpc-url.com
+
+# Replace with your actual chain ID
+NEXT_PUBLIC_CHAIN_ID=your-chain-id
+
+# Environment setting
+NEXT_PUBLIC_ENVIRONMENT=production
+
+# Postgres connection for Indexer API
+# Use a full connection URL or individual components
+# Example URL: postgres://USER:PASSWORD@HOST:PORT/DB
+DATABASE_URL=postgres://user:password@host:5432/dbname
+
+# Optional granular config (used if DATABASE_URL not provided)
+PGHOST=localhost
+PGPORT=5432
+PGUSER=postgres
+PGPASSWORD=postgres
+PGDATABASE=erc20_indexer
+
+# Optional: Analytics or monitoring service IDs
+# NEXT_PUBLIC_ANALYTICS_ID=your-analytics-id
+
+# Optional: Custom app configuration
+# NEXT_PUBLIC_APP_NAME=Kasplex Revoke
+# NEXT_PUBLIC_APP_VERSION=1.0.0
