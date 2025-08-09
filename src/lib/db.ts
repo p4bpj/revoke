@@ -35,7 +35,8 @@ function sslConfigFromEnv(): false | { rejectUnauthorized: boolean } {
 
 export async function query<T = any>(text: string, params?: any[]): Promise<{ rows: T[] }> {
   const client = getDbPool()
-  return client.query(text, params)
+  const result = await client.query(text, params)
+  return result as { rows: T[] }
 }
 
 
