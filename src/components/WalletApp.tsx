@@ -57,22 +57,14 @@ export default function WalletApp() {
     const loadingToast = toast.loading('Preparing to revoke approval...')
 
     try {
-      // Auto-switch to Kasplex network if not already connected
-      if (!isOnCorrectNetwork) {
-        toast.loading('Switching to Kasplex network...', { id: loadingToast })
-        try {
-          await switchChain({ chainId: defaultChain.id })
-          // Wait for the network switch to complete
-          await new Promise(resolve => setTimeout(resolve, 2000))
-          toast.loading('Network switched, revoking approval...', { id: loadingToast })
-        } catch (switchError) {
-          console.error('Network switch failed:', switchError)
-          toast.error(`Failed to switch to ${defaultChain.name} network. Please switch manually.`, { id: loadingToast })
-          return
-        }
-      } else {
-        toast.loading('Revoking approval...', { id: loadingToast })
+      // Check if user is on correct network before proceeding
+      if (chainId !== defaultChain.id) {
+        console.error(`Wrong network detected. Current: ${chainId}, Expected: ${defaultChain.id}`)
+        toast.error(`Wrong network! Please manually switch to ${defaultChain.name} (Chain ID: ${defaultChain.id}) in your wallet and try again.`, { id: loadingToast })
+        return
       }
+      
+      toast.loading('Revoking approval on Kasplex...', { id: loadingToast })
 
       console.log('Attempting to revoke:', { tokenAddress, spender, type, chainId: defaultChain.id })
       
@@ -135,7 +127,7 @@ export default function WalletApp() {
       
       toast.error(errorMessage, { id: loadingToast })
     }
-  }, [address, isOnCorrectNetwork, switchChain])
+  }, [address, chainId])
 
   const handleBulkRevoke = useCallback(async () => {
     if (approvals.length === 0) {
