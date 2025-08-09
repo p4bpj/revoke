@@ -21,7 +21,11 @@ export function AllowanceTable({
   const [isBulkRevoking, setIsBulkRevoking] = useState(false)
 
   const handleRevoke = async (approval: TokenApproval) => {
-    setRevokingIds(prev => new Set([...prev, approval.id]))
+    setRevokingIds(prev => {
+      const newSet = new Set(prev)
+      newSet.add(approval.id)
+      return newSet
+    })
     try {
       await onRevoke(approval.tokenAddress, approval.spender, approval.type as 'ERC20' | 'ERC721')
     } finally {
