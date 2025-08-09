@@ -134,7 +134,7 @@ export default function WalletApp() {
           Connect your wallet to view and manage your token allowances
         </p>
         <WalletConnector 
-          onConnect={() => connect({ connector: connectors[0] })}
+          onConnect={async () => connect({ connector: connectors[0] })}
           isConnecting={isConnecting}
         />
       </div>
