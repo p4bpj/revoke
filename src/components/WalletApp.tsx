@@ -163,7 +163,7 @@ export default function WalletApp() {
               {isLoading ? 'Scanning...' : 'Scan Approvals'}
             </button>
             <button
-              onClick={disconnect}
+              onClick={() => disconnect()}
               className="btn-secondary"
             >
               Disconnect
