@@ -113,7 +113,7 @@ export default function WalletApp() {
       
       toast.error(errorMessage, { id: loadingToast })
     }
-  }, [address, isOnCorrectNetwork])
+  }, [address, isOnCorrectNetwork, switchChain])
 
   const handleBulkRevoke = useCallback(async () => {
     if (approvals.length === 0) {

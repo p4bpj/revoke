@@ -46,7 +46,7 @@ export async function fetchERC20Approvals(
     // Enrich with token metadata (name, symbol, decimals) via batch on-chain calls
     const uniqueTokenAddresses = Array.from(new Set(rows.map(r => r.token_address.toLowerCase())))
 
-    const client = getPublicClient(config, { chainId })
+    const client = getPublicClient(config, { chainId: chainId as 1337 })
     if (!client) throw new Error('No public client available')
 
     const metaCalls = uniqueTokenAddresses.flatMap((addr) => ([
