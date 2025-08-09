@@ -46,7 +46,7 @@ export async function fetchERC20Approvals(
     // Enrich with token metadata (name, symbol, decimals) via batch on-chain calls
     const uniqueTokenAddresses = Array.from(new Set(rows.map(r => r.token_address.toLowerCase())))
 
-    const client = getPublicClient(config, { chainId: chainId as 1337 })
+    const client = getPublicClient(config, { chainId: chainId as 167012 })
     if (!client) throw new Error('No public client available')
 
     const metaCalls = uniqueTokenAddresses.flatMap((addr) => ([
@@ -109,7 +109,7 @@ export async function fetchERC20Approvals(
   }
 
   // Fallback to on-chain scan if API fails
-  const client = getPublicClient(config, { chainId: chainId as 1337 })
+  const client = getPublicClient(config, { chainId: chainId as 167012 })
   if (!client) throw new Error('No public client available')
 
   try {
@@ -187,7 +187,7 @@ export async function fetchNFTApprovals(
   userAddress: string,
   chainId: number
 ): Promise<TokenApproval[]> {
-  const client = getPublicClient(config, { chainId: chainId as 1337 })
+  const client = getPublicClient(config, { chainId: chainId as 167012 })
   if (!client) throw new Error('No public client available')
 
   try {

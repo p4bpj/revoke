@@ -2,7 +2,7 @@ import { defineChain } from 'viem'
 
 // Kasplex chain configuration - replace with actual Kasplex network details
 export const kasplex = defineChain({
-  id: 1337,
+  id: 167012,
   name: 'Kasplex',
   network: 'kasplex',
   nativeCurrency: {
