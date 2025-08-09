@@ -61,14 +61,24 @@ export async function fetchERC20Approvals(
 
     const tokenMeta = new Map<string, { name?: string; symbol?: string; decimals?: number }>()
     for (let i = 0; i < uniqueTokenAddresses.length; i++) {
-      const nameRes = metaResults[i * 3]
-      const symRes = metaResults[i * 3 + 1]
-      const decRes = metaResults[i * 3 + 2]
-      tokenMeta.set(uniqueTokenAddresses[i], {
-        name: nameRes?.status === 'success' ? (nameRes.result as string) : 'Token',
-        symbol: symRes?.status === 'success' ? (symRes.result as string) : undefined,
-        decimals: decRes?.status === 'success' ? (decRes.result as number) : 18,
-      })
+      try {
+        const nameRes = metaResults[i * 3]
+        const symRes = metaResults[i * 3 + 1]
+        const decRes = metaResults[i * 3 + 2]
+        
+        tokenMeta.set(uniqueTokenAddresses[i], {
+          name: (nameRes?.status === 'success' && typeof nameRes.result === 'string') ? nameRes.result : 'Token',
+          symbol: (symRes?.status === 'success' && typeof symRes.result === 'string') ? symRes.result : undefined,
+          decimals: (decRes?.status === 'success' && typeof decRes.result === 'number') ? decRes.result : 18,
+        })
+      } catch (error) {
+        console.warn(`Failed to process metadata for token ${uniqueTokenAddresses[i]}:`, error)
+        tokenMeta.set(uniqueTokenAddresses[i], {
+          name: 'Token',
+          symbol: undefined,
+          decimals: 18,
+        })
+      }
     }
 
     const approvals: TokenApproval[] = rows.map((r) => {
