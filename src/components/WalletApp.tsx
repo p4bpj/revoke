@@ -1,12 +1,12 @@
 import { useState, useCallback } from 'react'
-import { useAccount, useConnect, useDisconnect, useChainId } from 'wagmi'
+import { useAccount, useConnect, useDisconnect, useChainId, useSwitchChain } from 'wagmi'
 import { writeContract, waitForTransactionReceipt } from 'wagmi/actions'
 import toast from 'react-hot-toast'
 import { AlertTriangle, Wallet, Scan, RotateCcw } from 'lucide-react'
 
 import { fetchAllApprovals, type TokenApproval } from '@/lib/approvals'
 import { ERC20_ABI, ERC721_ABI } from '@/lib/contracts'
-import { config } from '@/lib/config'
+import { config, defaultChain } from '@/lib/config'
 import { WalletConnector } from './WalletConnector'
 import { AllowanceTable } from './AllowanceTable'
 import { StatsCard } from './StatsCard'
@@ -17,14 +17,24 @@ export default function WalletApp() {
   const chainId = useChainId()
   const { connect, connectors, isPending: isConnecting } = useConnect()
   const { disconnect } = useDisconnect()
+  const { switchChain } = useSwitchChain()
   
   const [approvals, setApprovals] = useState<TokenApproval[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Check if user is on the correct network
+  const isOnCorrectNetwork = chainId === defaultChain.id
+  const currentChainName = chainId === 1 ? 'Ethereum' : chainId === 137 ? 'Polygon' : chainId === 56 ? 'BNB Chain' : `Chain ${chainId}`
+
   const handleScan = useCallback(async () => {
     if (!address || !chainId) {
       toast.error('Please connect your wallet first')
+      return
+    }
+
+    if (!isOnCorrectNetwork) {
+      toast.error(`Please switch to ${defaultChain.name} network to scan approvals`)
       return
     }
     
@@ -43,10 +53,15 @@ export default function WalletApp() {
     } finally {
       setIsLoading(false)
     }
-  }, [address, chainId])
+  }, [address, chainId, isOnCorrectNetwork])
 
   const handleRevoke = useCallback(async (tokenAddress: string, spender: string, type: 'ERC20' | 'ERC721') => {
     if (!address) return
+
+    if (!isOnCorrectNetwork) {
+      toast.error(`Please switch to ${defaultChain.name} network to revoke approvals`)
+      return
+    }
 
     const loadingToast = toast.loading('Revoking approval...')
     
@@ -95,7 +110,7 @@ export default function WalletApp() {
       
       toast.error(errorMessage, { id: loadingToast })
     }
-  }, [address])
+  }, [address, isOnCorrectNetwork])
 
   const handleBulkRevoke = useCallback(async () => {
     if (approvals.length === 0) {
@@ -165,6 +180,27 @@ export default function WalletApp() {
 
   return (
     <div className="space-y-8">
+      {/* Network Warning */}
+      {!isOnCorrectNetwork && (
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="w-5 h-5 text-orange-500" />
+            <div className="flex-1">
+              <p className="text-orange-800 font-medium">Wrong Network</p>
+              <p className="text-orange-700 text-sm">
+                You're connected to {currentChainName}. Please switch to {defaultChain.name} to use this app.
+              </p>
+            </div>
+            <button
+              onClick={() => switchChain({ chainId: defaultChain.id })}
+              className="px-3 py-1 bg-orange-100 hover:bg-orange-200 text-orange-800 rounded text-sm font-medium transition-colors"
+            >
+              Switch Network
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Wallet Info & Actions */}
       <div className="card">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -172,14 +208,16 @@ export default function WalletApp() {
             <h2 className="text-lg font-semibold text-gray-900">Connected Wallet</h2>
             <p className="text-gray-600 font-mono text-sm break-all">{address}</p>
             {chainId && (
-              <p className="text-gray-500 text-sm">Chain ID: {chainId}</p>
+              <p className="text-gray-500 text-sm">
+                Chain ID: {chainId} {isOnCorrectNetwork ? '✓' : '⚠️'}
+              </p>
             )}
           </div>
           <div className="flex gap-3">
             <button
               onClick={handleScan}
-              disabled={isLoading}
-              className="btn-primary flex items-center gap-2"
+              disabled={isLoading || !isOnCorrectNetwork}
+              className={`btn-primary flex items-center gap-2 ${!isOnCorrectNetwork ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               {isLoading ? <LoadingSpinner size="sm" /> : <Scan className="w-4 h-4" />}
               {isLoading ? 'Scanning...' : 'Scan Approvals'}
