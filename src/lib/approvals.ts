@@ -132,7 +132,8 @@ export async function fetchERC20Approvals(
 
     const approvals: TokenApproval[] = []
     let resultIndex = 0
-    for (const { tokenAddress, spender } of approvalMap.values()) {
+    const approvalEntries = Array.from(approvalMap.values())
+    for (const { tokenAddress, spender } of approvalEntries) {
       try {
         const allowanceResult = results[resultIndex++]
         const nameResult = results[resultIndex++]
@@ -230,7 +231,8 @@ export async function fetchNFTApprovals(
     const approvals: TokenApproval[] = []
     let resultIndex = 0
 
-    for (const { tokenAddress, operator } of approvalMap.values()) {
+    const nftApprovalEntries = Array.from(approvalMap.values())
+    for (const { tokenAddress, operator } of nftApprovalEntries) {
       try {
         const isApprovedResult = results[resultIndex++]
         const nameResult = results[resultIndex++]
