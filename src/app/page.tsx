@@ -1,6 +1,6 @@
 'use client'
 
-import { Shield } from 'lucide-react'
+import { Shield, Link2, Search, X, AlertTriangle, Lock, Eye, Zap } from 'lucide-react'
 import dynamic from 'next/dynamic'
 
 // Dynamically import the component that uses wagmi hooks to prevent hydration issues
@@ -16,21 +16,222 @@ const WalletApp = dynamic(() => import('@/components/WalletApp'), {
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <main className="container mx-auto px-4 py-8 max-w-7xl">
-        <div className="mb-8 text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4 flex items-center justify-center gap-3">
-            <Shield className="text-primary-500" />
-            Kasplex Revoke
-          </h1>
-          <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            Protect your assets by revoking unnecessary token allowances and NFT approvals on Kasplex.
-            Keep your wallet secure by regularly auditing and removing unused permissions.
-          </p>
+    <div className="min-h-screen bg-white">
+      {/* Hero Section */}
+      <section className="bg-gradient-to-br from-kaspa-teal to-kaspa-bright-teal text-white py-20">
+        <div className="container mx-auto px-4 text-center max-w-6xl">
+          <div className="mb-8">
+            <h1 className="text-5xl md:text-6xl font-rubik font-bold mb-6">
+              Take Control of Your 
+              <span className="block text-white/90">Kasplex Wallet</span>
+            </h1>
+            <p className="text-xl md:text-2xl text-white/90 max-w-4xl mx-auto leading-relaxed font-lato">
+              When using dApps on Kasplex, you grant them permission to spend your tokens and NFTs. 
+              This is called a token approval. If you don&apos;t revoke these approvals, the dApp can spend your tokens forever. 
+              Take back control by revoking your approvals.
+            </p>
+          </div>
+          
+          {/* Mock Video/Demo Placeholder */}
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 mb-8 max-w-4xl mx-auto">
+            <div className="bg-kaspa-dark-gray/20 rounded-xl h-64 md:h-80 flex items-center justify-center">
+              <div className="text-center">
+                <Shield className="w-16 h-16 mx-auto mb-4 text-white/60" />
+                <p className="text-white/80 text-lg">Interactive Wallet Scanner</p>
+                <p className="text-white/60">Connect your wallet to begin</p>
+              </div>
+            </div>
+          </div>
+          
+          <button className="bg-white text-kaspa-dark-gray font-oswald font-bold text-lg px-8 py-4 rounded-xl hover:bg-gray-100 transition-colors shadow-lg">
+            Get Started
+          </button>
         </div>
+      </section>
 
-        <WalletApp />
-      </main>
+      {/* Main App Section */}
+      <section className="py-16 bg-gray-50">
+        <div className="container mx-auto px-4 max-w-7xl">
+          <WalletApp />
+        </div>
+      </section>
+
+      {/* How To Section */}
+      <section className="py-20 bg-kaspa-dark-gray text-white">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <h2 className="text-4xl font-oswald font-bold text-center mb-16">
+            How To Secure Your Approvals
+          </h2>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="text-center">
+              <div className="bg-kaspa-teal rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6">
+                <Link2 className="w-8 h-8" />
+              </div>
+              <h3 className="text-xl font-oswald font-bold mb-4">1. Connect</h3>
+              <p className="text-gray-300 leading-relaxed">
+                Click Connect Wallet on the top right or enter an address in the search bar to begin scanning.
+              </p>
+            </div>
+            
+            <div className="text-center">
+              <div className="bg-kaspa-teal rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6">
+                <Search className="w-8 h-8" />
+              </div>
+              <h3 className="text-xl font-oswald font-bold mb-4">2. Inspect</h3>
+              <p className="text-gray-300 leading-relaxed">
+                Inspect your approvals by using the network selection, sorting and filtering options to find risky permissions.
+              </p>
+            </div>
+            
+            <div className="text-center">
+              <div className="bg-kaspa-teal rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6">
+                <X className="w-8 h-8" />
+              </div>
+              <h3 className="text-xl font-oswald font-bold mb-4">3. Revoke</h3>
+              <p className="text-gray-300 leading-relaxed">
+                Revoke the approvals that you no longer use to prevent unwanted access to your funds and NFTs.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Why Use Section */}
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <h2 className="text-4xl font-oswald font-bold text-kaspa-dark-gray text-center mb-16">
+            Why You Should Use Kasplex Revoke
+          </h2>
+          
+          <div className="space-y-12">
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              <div>
+                <h3 className="text-2xl font-oswald font-bold text-kaspa-dark-gray mb-4 flex items-center gap-3">
+                  <Eye className="text-kaspa-teal" />
+                  1. Use Kasplex Revoke regularly
+                </h3>
+                <p className="text-gray-600 leading-relaxed text-lg">
+                  It is always good to limit your approvals whenever you are not actively using a dApp, especially for NFT 
+                  marketplaces. This reduces the risk of losing your funds to hacks or exploits and can also help mitigate the 
+                  damage of phishing scams.
+                </p>
+              </div>
+              <div className="bg-gray-50 rounded-xl p-8 h-48 flex items-center justify-center">
+                <Shield className="w-24 h-24 text-kaspa-teal" />
+              </div>
+            </div>
+            
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              <div className="bg-gray-50 rounded-xl p-8 h-48 flex items-center justify-center order-2 md:order-1">
+                <AlertTriangle className="w-24 h-24 text-kaspa-teal" />
+              </div>
+              <div className="order-1 md:order-2">
+                <h3 className="text-2xl font-oswald font-bold text-kaspa-dark-gray mb-4 flex items-center gap-3">
+                  <AlertTriangle className="text-kaspa-teal" />
+                  2. Use Kasplex Revoke after getting scammed
+                </h3>
+                <p className="text-gray-600 leading-relaxed text-lg">
+                  Very often, scammers try to trick you into granting them an approval to your funds. Sort your approvals by 
+                  most recent to find out which approvals are to blame and revoke them to prevent further damage. 
+                  Unfortunately it is not possible to recover funds that have already been stolen.
+                </p>
+              </div>
+            </div>
+            
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              <div>
+                <h3 className="text-2xl font-oswald font-bold text-kaspa-dark-gray mb-4 flex items-center gap-3">
+                  <Zap className="text-kaspa-teal" />
+                  3. Stay ahead of threats
+                </h3>
+                <p className="text-gray-600 leading-relaxed text-lg">
+                  Prevention is better than mitigation. Regular approval management helps you maintain a clean wallet state 
+                  and reduces your attack surface. Our platform includes smart contract analysis and warning systems to help 
+                  you identify potentially risky approvals before they become a problem.
+                </p>
+              </div>
+              <div className="bg-gray-50 rounded-xl p-8 h-48 flex items-center justify-center">
+                <Lock className="w-24 h-24 text-kaspa-teal" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="py-20 bg-gray-50">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <h2 className="text-4xl font-oswald font-bold text-kaspa-dark-gray text-center mb-16">
+            Frequently Asked Questions
+          </h2>
+          
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="bg-white rounded-xl p-8 shadow-sm">
+              <h3 className="text-xl font-oswald font-bold text-kaspa-dark-gray mb-4">
+                Can I use Kasplex Revoke to recover stolen assets?
+              </h3>
+              <p className="text-gray-600 leading-relaxed">
+                No. Kasplex Revoke is a <em>preventative</em> tool that helps you practice proper wallet hygiene. By regularly revoking 
+                active approvals you reduce the chances of becoming the victim of approval exploits. But unfortunately it cannot be used to recover any 
+                stolen funds. You should still make sure to revoke the approvals that were used to take your funds so 
+                that they cannot steal more in the future.
+              </p>
+            </div>
+            
+            <div className="bg-white rounded-xl p-8 shadow-sm">
+              <h3 className="text-xl font-oswald font-bold text-kaspa-dark-gray mb-4">
+                Can hardware wallets save me from approval exploits?
+              </h3>
+              <p className="text-gray-600 leading-relaxed">
+                No. In general, hardware wallets are much safer than mobile or browser-based wallets because the 
+                wallet&apos;s keys are securely stored on the device, making it impossible to steal the keys without 
+                proper access to the device. But with approvals no one <em>needs</em> to steal your keys to take your tokens. 
+                And because of that hardware wallets offer no extra protection against approval exploits.
+              </p>
+            </div>
+            
+            <div className="bg-white rounded-xl p-8 shadow-sm">
+              <h3 className="text-xl font-oswald font-bold text-kaspa-dark-gray mb-4">
+                I want to revoke approvals, but when I add KAS to my account it gets stolen
+              </h3>
+              <p className="text-gray-600 leading-relaxed">
+                If you have a so-called &quot;sweeper bot&quot; on your account that steals any KAS as soon as it comes in, 
+                your seed phrase was compromised. This means that revoking approvals is not going to help with 
+                your wallet security. Unfortunately, there is no way for your wallet to recover from this. You should 
+                abandon this wallet and create a new one.
+              </p>
+            </div>
+            
+            <div className="bg-white rounded-xl p-8 shadow-sm">
+              <h3 className="text-xl font-oswald font-bold text-kaspa-dark-gray mb-4">
+                Is it enough to &quot;disconnect&quot; my wallet instead of revoking approvals?
+              </h3>
+              <p className="text-gray-600 leading-relaxed">
+                No. Disconnecting your wallet (e.g. MetaMask) does not do <em>anything</em> to protect you from approval 
+                exploits - or most other exploits. The only thing that happens when disconnecting your wallet from a 
+                website is that that website cannot see your address anymore. But your approvals stay active.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-kaspa-dark-gray text-white py-12">
+        <div className="container mx-auto px-4 max-w-6xl text-center">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <Shield className="w-8 h-8 text-kaspa-teal" />
+            <h3 className="text-2xl font-rubik font-bold">Kasplex Revoke</h3>
+          </div>
+          <p className="text-gray-400 mb-6">
+            Secure your Kasplex assets by managing token approvals and NFT permissions
+          </p>
+          <div className="text-sm text-gray-500">
+            Built for the Kasplex ecosystem • Open Source
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }

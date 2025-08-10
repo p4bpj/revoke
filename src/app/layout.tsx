@@ -4,6 +4,26 @@ import './globals.css'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'react-hot-toast'
 import { Web3ModalProvider } from '@/lib/web3modal'
+import { Rubik, Oswald, Lato } from 'next/font/google'
+
+const rubik = Rubik({ 
+  subsets: ['latin'],
+  variable: '--font-rubik',
+  display: 'swap',
+})
+
+const oswald = Oswald({ 
+  subsets: ['latin'],
+  variable: '--font-oswald',
+  display: 'swap',
+})
+
+const lato = Lato({ 
+  subsets: ['latin'],
+  weight: ['300', '400', '700'],
+  variable: '--font-lato',
+  display: 'swap',
+})
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -26,7 +46,7 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </head>
-      <body className="bg-gray-50 min-h-screen">
+      <body className={`${rubik.variable} ${oswald.variable} ${lato.variable} font-lato bg-gray-50 min-h-screen`}>
         <Web3ModalProvider>
           <QueryClientProvider client={queryClient}>
             <Toaster 
@@ -34,7 +54,7 @@ export default function RootLayout({
               toastOptions={{
                 duration: 4000,
                 style: {
-                  background: '#363636',
+                  background: '#231F20',
                   color: '#fff',
                 },
               }}
