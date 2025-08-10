@@ -9,16 +9,16 @@
  */
 
 import { getPublicClient } from 'wagmi/actions'
-import { config } from './config'
+import { config } from './web3modal'
 
 // Known scam addresses on Kasplex (to be populated as we discover them)
-const KNOWN_SCAM_ADDRESSES = new Set([
+const KNOWN_SCAM_ADDRESSES = new Set<string>([
   // Add known scam addresses here as they are discovered
   // Example: '0x1234567890123456789012345678901234567890'
 ])
 
 // Known legitimate contracts (whitelist)
-const TRUSTED_CONTRACTS = new Set([
+const TRUSTED_CONTRACTS = new Set<string>([
   // Add known safe contracts here
   // Example: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd'
 ])
@@ -192,6 +192,10 @@ async function getContractDeploymentInfo(contractAddress: string, chainId: numbe
   try {
     const publicClient = getPublicClient(config, { chainId: chainId as 167012 })
     
+    if (!publicClient) {
+      throw new Error('Public client not available')
+    }
+    
     // Get current block number
     const currentBlock = await publicClient.getBlockNumber()
     
@@ -205,8 +209,8 @@ async function getContractDeploymentInfo(contractAddress: string, chainId: numbe
     // Estimate deployment time based on recent blocks
     // Note: This is a simplified approach. In production, you'd want to
     // binary search for the exact deployment block or use an indexer
-    const blocksToCheck = 1000n // Check last 1000 blocks (~last few hours)
-    const startBlock = currentBlock > blocksToCheck ? currentBlock - blocksToCheck : 0n
+    const blocksToCheck = BigInt(1000) // Check last 1000 blocks (~last few hours)
+    const startBlock = currentBlock > blocksToCheck ? currentBlock - blocksToCheck : BigInt(0)
     
     // If we can't determine exact age, assume it's not recent to avoid false positives
     return {
@@ -220,7 +224,7 @@ async function getContractDeploymentInfo(contractAddress: string, chainId: numbe
     return {
       isRecent: false,
       hoursAgo: 999,
-      deploymentBlock: 0n
+      deploymentBlock: BigInt(0)
     }
   }
 }

@@ -1,23 +1,19 @@
 import { useState, useCallback } from 'react'
-import { useAccount, useConnect, useDisconnect, useChainId, useSwitchChain } from 'wagmi'
 import { writeContract, waitForTransactionReceipt } from 'wagmi/actions'
 import toast from 'react-hot-toast'
 import { AlertTriangle, Wallet, Scan, RotateCcw } from 'lucide-react'
 
 import { fetchAllApprovals, type TokenApproval } from '@/lib/approvals'
 import { ERC20_ABI, ERC721_ABI } from '@/lib/contracts'
-import { config, defaultChain } from '@/lib/config'
-import { WalletConnector } from './WalletConnector'
+import { defaultChain } from '@/lib/chains'
+import { config, useAppKit, useWalletConnection } from '@/lib/web3modal'
 import { AllowanceTable } from './AllowanceTable'
 import { StatsCard } from './StatsCard'
 import { LoadingSpinner } from './LoadingSpinner'
 
 export default function WalletApp() {
-  const { address, isConnected } = useAccount()
-  const chainId = useChainId()
-  const { connect, connectors, isPending: isConnecting } = useConnect()
-  const { disconnect } = useDisconnect()
-  const { switchChain } = useSwitchChain()
+  const { address, isConnected, chainId } = useWalletConnection()
+  const { open } = useAppKit()
   
   const [approvals, setApprovals] = useState<TokenApproval[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -213,7 +209,7 @@ export default function WalletApp() {
     } else {
       toast.error('All revoke attempts failed', { id: loadingToast })
     }
-  }, [approvals, handleRevoke, address, chainId])
+  }, [approvals, address, chainId])
 
   const dangerousApprovals = approvals.filter(approval => approval.isDangerous)
   const activeApprovals = approvals.filter(approval => !approval.isDangerous)
@@ -226,10 +222,12 @@ export default function WalletApp() {
         <p className="text-gray-600 mb-6">
           Connect your wallet to view and manage your token allowances
         </p>
-        <WalletConnector 
-          onConnect={async () => connect({ connector: connectors[0] })}
-          isConnecting={isConnecting}
-        />
+        <button
+          onClick={() => open()}
+          className="btn-primary"
+        >
+          Connect Wallet
+        </button>
       </div>
     )
   }
@@ -248,7 +246,7 @@ export default function WalletApp() {
               </p>
             </div>
             <button
-              onClick={() => switchChain({ chainId: defaultChain.id })}
+              onClick={() => open({ view: 'Networks' })}
               className="px-3 py-1 bg-orange-100 hover:bg-orange-200 text-orange-800 rounded text-sm font-medium transition-colors"
             >
               Switch Network
@@ -279,10 +277,10 @@ export default function WalletApp() {
               {isLoading ? 'Scanning...' : 'Scan Kasplex Approvals'}
             </button>
             <button
-              onClick={() => disconnect()}
+              onClick={() => open({ view: 'Account' })}
               className="btn-secondary"
             >
-              Disconnect
+              Account
             </button>
           </div>
         </div>

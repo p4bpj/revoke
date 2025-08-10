@@ -1,0 +1,94 @@
+/**
+ * Web3Modal (Reown AppKit) Configuration
+ * 
+ * Provides a modern wallet connection UI with support for multiple wallets
+ * including MetaMask, Coinbase, WalletConnect-compatible wallets, and more.
+ */
+
+import React from 'react'
+import { createAppKit } from '@reown/appkit/react'
+import { WagmiAdapter } from '@reown/appkit-adapter-wagmi'
+import { cookieStorage, createStorage } from '@wagmi/core'
+import { WagmiProvider, useAccount, useChainId } from 'wagmi'
+import { supportedChains, defaultChain } from './chains'
+
+// Get project ID from environment (fallback for development)
+// For production, get your own project ID at https://cloud.reown.com/
+const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || '0123456789abcdef0123456789abcdef'
+
+// Configure Wagmi adapter for AppKit
+export const wagmiAdapter = new WagmiAdapter({
+  storage: createStorage({
+    storage: cookieStorage,
+  }),
+  ssr: true,
+  projectId,
+  networks: [...supportedChains],
+})
+
+// App metadata for wallet connection
+const metadata = {
+  name: 'Kasplex Revoke',
+  description: 'Protect your assets by revoking unnecessary token allowances and NFT approvals on Kasplex',
+  url: typeof window !== 'undefined' ? window.location.origin : 'https://revoke.kasplex.io',
+  icons: [
+    typeof window !== 'undefined' 
+      ? `${window.location.origin}/favicon.ico`
+      : '/favicon.ico'
+  ],
+}
+
+// Create AppKit instance
+export const modal = createAppKit({
+  adapters: [wagmiAdapter],
+  projectId,
+  networks: [...supportedChains],
+  defaultNetwork: defaultChain,
+  metadata,
+  features: {
+    analytics: false, // Disable analytics for privacy
+    email: false,     // Disable email wallet for simplicity
+    socials: [],      // Disable social logins
+    emailShowWallets: false,
+  },
+  themeMode: 'light',
+  themeVariables: {
+    '--w3m-color-mix': '#6366f1', // Match primary color
+    '--w3m-color-mix-strength': 20,
+    '--w3m-font-family': 'Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif',
+    '--w3m-border-radius-master': '8px',
+  },
+})
+
+// Export wagmi config for use in components
+export const config = wagmiAdapter.wagmiConfig
+
+// Helper hook for wallet connection
+export { useAppKit, useAppKitAccount, useAppKitNetwork } from '@reown/appkit/react'
+
+/**
+ * AppKit Provider Component
+ * Wrap your app with this to enable Web3Modal
+ */
+export function Web3ModalProvider({ children }: { children: React.ReactNode }) {
+  return (
+    <WagmiProvider config={config}>
+      {children}
+    </WagmiProvider>
+  )
+}
+
+/**
+ * Helper function to get current connection status
+ * Using standard wagmi hooks for compatibility
+ */
+export function useWalletConnection() {
+  const { isConnected, address } = useAccount()
+  const chainId = useChainId()
+  
+  return {
+    isConnected,
+    address: address as `0x${string}` | undefined,
+    chainId: chainId || defaultChain.id,
+  }
+}

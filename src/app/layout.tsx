@@ -1,10 +1,9 @@
 'use client'
 
 import './globals.css'
-import { WagmiProvider } from 'wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'react-hot-toast'
-import { config } from '@/lib/config'
+import { Web3ModalProvider } from '@/lib/web3modal'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,7 +27,7 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.ico" />
       </head>
       <body className="bg-gray-50 min-h-screen">
-        <WagmiProvider config={config}>
+        <Web3ModalProvider>
           <QueryClientProvider client={queryClient}>
             <Toaster 
               position="top-right" 
@@ -42,7 +41,7 @@ export default function RootLayout({
             />
             {children}
           </QueryClientProvider>
-        </WagmiProvider>
+        </Web3ModalProvider>
       </body>
     </html>
   )
