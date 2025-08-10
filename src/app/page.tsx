@@ -2,6 +2,7 @@
 
 import { Shield, Link2, Search, X, AlertTriangle, Lock, Eye, Zap } from 'lucide-react'
 import dynamic from 'next/dynamic'
+import { TopHeader } from '@/components/TopHeader'
 
 // Dynamically import the component that uses wagmi hooks to prevent hydration issues
 const WalletApp = dynamic(() => import('@/components/WalletApp'), {
@@ -17,13 +18,15 @@ const WalletApp = dynamic(() => import('@/components/WalletApp'), {
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-white">
+      <TopHeader />
+      
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-kaspa-teal to-kaspa-bright-teal text-white py-20">
         <div className="container mx-auto px-4 text-center max-w-6xl">
           <div className="mb-8">
             <h1 className="text-5xl md:text-6xl font-rubik font-bold mb-6">
               Take Control of Your 
-              <span className="block text-white/90">Kasplex Wallet</span>
+              <span className="block text-white/90">Kaspa Assets</span>
             </h1>
             <p className="text-xl md:text-2xl text-white/90 max-w-4xl mx-auto leading-relaxed font-lato">
               When using dApps on Kasplex, you grant them permission to spend your tokens and NFTs. 
@@ -32,25 +35,17 @@ export default function HomePage() {
             </p>
           </div>
           
-          {/* Mock Video/Demo Placeholder */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 mb-8 max-w-4xl mx-auto">
-            <div className="bg-kaspa-dark-gray/20 rounded-xl h-64 md:h-80 flex items-center justify-center">
-              <div className="text-center">
-                <Shield className="w-16 h-16 mx-auto mb-4 text-white/60" />
-                <p className="text-white/80 text-lg">Interactive Wallet Scanner</p>
-                <p className="text-white/60">Connect your wallet to begin</p>
-              </div>
-            </div>
-          </div>
-          
-          <button className="bg-white text-kaspa-dark-gray font-oswald font-bold text-lg px-8 py-4 rounded-xl hover:bg-gray-100 transition-colors shadow-lg">
+          <a
+            href="#scanner"
+            className="bg-white text-kaspa-dark-gray font-oswald font-bold text-lg px-8 py-4 rounded-xl hover:bg-gray-100 transition-colors shadow-lg inline-block"
+          >
             Get Started
-          </button>
+          </a>
         </div>
       </section>
 
       {/* Main App Section */}
-      <section className="py-16 bg-gray-50">
+      <section id="scanner" className="py-16 bg-gray-50">
         <div className="container mx-auto px-4 max-w-7xl">
           <WalletApp />
         </div>
