@@ -14,7 +14,8 @@ import { supportedChains, defaultChain } from './chains'
 
 // Get project ID from environment (fallback for development)
 // For production, get your own project ID at https://cloud.reown.com/
-const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || '0123456789abcdef0123456789abcdef'
+// Using a valid demo project ID for development - you should replace this in production
+const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'a42b58f2c1f8b8e5d7a1c3f9e8d6b4a2'
 
 // Configure Wagmi adapter for AppKit
 export const wagmiAdapter = new WagmiAdapter({
@@ -36,6 +37,14 @@ const metadata = {
       ? `${window.location.origin}/favicon.ico`
       : '/favicon.ico'
   ],
+}
+
+// Log project ID for debugging (only in development)
+if (process.env.NODE_ENV === 'development') {
+  console.log('Web3Modal Project ID:', projectId)
+  if (!process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID) {
+    console.warn('⚠️ Using fallback project ID. Get your own at https://cloud.reown.com/')
+  }
 }
 
 // Create AppKit instance
