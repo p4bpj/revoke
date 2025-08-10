@@ -3,6 +3,7 @@ import { getPublicClient } from 'wagmi/actions'
 import { parseAbiItem, formatUnits, getAddress, isAddress } from 'viem'
 import { ERC20_ABI, ERC721_ABI, ERC1155_ABI, MULTICALL3_ADDRESS } from './contracts'
 import { config } from './config'
+import { analyzeContract, type SecurityAnalysis } from './scamDetection'
 
 export interface TokenApproval {
   id: string
@@ -15,6 +16,7 @@ export interface TokenApproval {
   rawAllowance?: bigint
   lastUpdated: Date
   isDangerous: boolean
+  securityAnalysis?: SecurityAnalysis
 }
 
 const APPROVAL_TOPIC = '0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925' // keccak256("Approval(address,address,uint256)")
@@ -26,6 +28,36 @@ const DANGEROUS_SPENDERS = new Set([
   '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
   // Add more known dangerous addresses
 ])
+
+// Helper function to enhance approvals with security analysis
+async function enhanceApprovalWithSecurity(
+  approval: Omit<TokenApproval, 'securityAnalysis'>,
+  chainId: number
+): Promise<TokenApproval> {
+  try {
+    // Perform security analysis
+    const securityAnalysis = await analyzeContract(
+      approval.spender,
+      approval.rawAllowance,
+      approval.tokenName,
+      approval.tokenSymbol,
+      chainId
+    )
+    
+    // Update isDangerous based on security analysis
+    const isDangerous = approval.isDangerous || securityAnalysis.riskLevel === 'HIGH' || securityAnalysis.riskLevel === 'CRITICAL'
+    
+    return {
+      ...approval,
+      isDangerous,
+      securityAnalysis
+    }
+  } catch (error) {
+    console.warn('Security analysis failed for', approval.spender, error)
+    // Return original approval if security analysis fails
+    return approval as TokenApproval
+  }
+}
 
 // Helper function to process indexed NFT approvals
 async function processIndexedNFTApprovals(
@@ -162,11 +194,11 @@ export async function fetchERC20Approvals(
       }
     }
 
-    const approvals: TokenApproval[] = rows.map((r) => {
+    const baseApprovals = rows.map((r) => {
       const meta = tokenMeta.get(r.token_address.toLowerCase()) || {}
       return {
         id: `erc20-${getAddress(r.token_address)}-${getAddress(r.spender)}`,
-        type: 'ERC20',
+        type: 'ERC20' as const,
         tokenAddress: getAddress(r.token_address),
         tokenName: meta.name || 'Token',
         tokenSymbol: meta.symbol,
@@ -179,10 +211,16 @@ export async function fetchERC20Approvals(
             return r.amount
           }
         })(),
+        rawAllowance: BigInt(r.amount),
         lastUpdated: new Date(r.updated_at),
         isDangerous: DANGEROUS_SPENDERS.has(r.spender.toLowerCase()),
       }
     })
+
+    // Enhance with security analysis (run in parallel for performance)
+    const approvals = await Promise.all(
+      baseApprovals.map(approval => enhanceApprovalWithSecurity(approval, chainId))
+    )
 
     return approvals
   } catch (apiError) {
