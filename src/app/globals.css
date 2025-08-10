@@ -36,3 +36,20 @@
     @apply animate-spin rounded-full border-2 border-gray-300 border-t-primary-500;
   }
 }
+
+@layer utilities {
+  .animate-gentle-pulse {
+    animation: gentle-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
+
+@keyframes gentle-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.02);
+  }
+}

@@ -216,10 +216,19 @@ export default function WalletApp() {
 
   if (!isConnected) {
     return (
-      <div className="text-center py-12">
-        <p className="text-gray-600 text-lg">
-          Connect your wallet using the button in the top right corner to begin scanning for approvals.
-        </p>
+      <div className="text-center py-8">
+        <div className="max-w-md mx-auto">
+          <div className="mb-4">
+            <Wallet className="w-12 h-12 text-kaspa-teal mx-auto mb-3" />
+            <h3 className="text-xl font-oswald font-bold text-kaspa-dark-gray mb-2">Ready to Scan?</h3>
+          </div>
+          <p className="text-gray-600 leading-relaxed">
+            Click the <span className="font-semibold text-kaspa-teal">Connect Wallet</span> button in the top right corner to begin scanning your Kaspa assets for active approvals.
+          </p>
+          <div className="mt-4 text-sm text-gray-500">
+            ↗️ Look for the teal button above
+          </div>
+        </div>
       </div>
     )
   }

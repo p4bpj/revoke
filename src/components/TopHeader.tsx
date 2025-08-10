@@ -28,7 +28,7 @@ export function TopHeader() {
             ) : (
               <button
                 onClick={() => open()}
-                className="bg-kaspa-teal text-white font-oswald font-bold px-6 py-2 rounded-lg hover:bg-kaspa-teal/90 transition-colors"
+                className="bg-kaspa-teal text-white font-oswald font-bold px-6 py-2 rounded-lg hover:bg-kaspa-teal/90 transition-colors animate-gentle-pulse hover:animate-none"
               >
                 Connect Wallet
               </button>
