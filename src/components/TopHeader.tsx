@@ -1,24 +1,9 @@
 import { Shield, Github } from 'lucide-react'
-import { useAccount } from 'wagmi'
+import { useAppKit, useWalletConnection } from '@/lib/web3modal'
 
 export function TopHeader() {
-  const { isConnected, address } = useAccount()
-
-  const handleConnectWallet = () => {
-    // @ts-ignore - Web3Modal is available globally
-    if (typeof window !== 'undefined' && window.reown) {
-      // @ts-ignore
-      window.reown.modal.open()
-    }
-  }
-
-  const handleAccountClick = () => {
-    // @ts-ignore - Web3Modal is available globally
-    if (typeof window !== 'undefined' && window.reown) {
-      // @ts-ignore
-      window.reown.modal.open({ view: 'Account' })
-    }
-  }
+  const { address, isConnected } = useWalletConnection()
+  const { open } = useAppKit()
 
   return (
     <header className="bg-white/95 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50">
@@ -35,14 +20,14 @@ export function TopHeader() {
           <div className="flex items-center gap-4">
             {isConnected ? (
               <button
-                onClick={handleAccountClick}
+                onClick={() => open({ view: 'Account' })}
                 className="bg-kaspa-teal text-white font-oswald font-bold px-6 py-2 rounded-lg hover:bg-kaspa-teal/90 transition-colors"
               >
                 {address?.slice(0, 6)}...{address?.slice(-4)}
               </button>
             ) : (
               <button
-                onClick={handleConnectWallet}
+                onClick={() => open()}
                 className="bg-kaspa-teal text-white font-oswald font-bold px-6 py-2 rounded-lg hover:bg-kaspa-teal/90 transition-colors"
               >
                 Connect Wallet

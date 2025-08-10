@@ -216,18 +216,10 @@ export default function WalletApp() {
 
   if (!isConnected) {
     return (
-      <div className="card max-w-md mx-auto text-center">
-        <Wallet className="w-16 h-16 text-primary-500 mx-auto mb-4" />
-        <h2 className="text-2xl font-semibold mb-4">Connect Your Wallet</h2>
-        <p className="text-gray-600 mb-6">
-          Connect your wallet to view and manage your token allowances
+      <div className="text-center py-12">
+        <p className="text-gray-600 text-lg">
+          Connect your wallet using the button in the top right corner to begin scanning for approvals.
         </p>
-        <button
-          onClick={() => open()}
-          className="btn-primary"
-        >
-          Connect Wallet
-        </button>
       </div>
     )
   }
