@@ -28,7 +28,7 @@ export default function HomePage() {
             <Shield className="text-primary-500" />
             Kasplex Revoke
           </h1>
-          <p className="text-lg text-gray-600 max-w-2xl">
+          <p className="text-lg text-gray-600">
             Protect your assets by revoking unnecessary token allowances and NFT approvals on Kasplex.
             Keep your wallet secure by regularly auditing and removing unused permissions.
           </p>
