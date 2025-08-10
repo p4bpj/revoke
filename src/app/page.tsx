@@ -18,12 +18,12 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <main className="container mx-auto px-4 py-8 max-w-7xl">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4 flex items-center gap-3">
+        <div className="mb-8 text-center">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4 flex items-center justify-center gap-3">
             <Shield className="text-primary-500" />
             Kasplex Revoke
           </h1>
-          <p className="text-lg text-gray-600">
+          <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
             Protect your assets by revoking unnecessary token allowances and NFT approvals on Kasplex.
             Keep your wallet secure by regularly auditing and removing unused permissions.
           </p>
