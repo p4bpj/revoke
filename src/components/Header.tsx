@@ -1,4 +1,4 @@
-import { Shield, Github, ExternalLink } from 'lucide-react'
+import { Shield, Github } from 'lucide-react'
 
 export function Header() {
   return (
@@ -14,16 +14,6 @@ export function Header() {
           </div>
           
           <div className="flex items-center gap-4">
-            <a
-              href="https://revoke.cash"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-gray-600 hover:text-gray-900 flex items-center gap-1 text-sm"
-            >
-              Inspired by Revoke.cash
-              <ExternalLink className="w-3 h-3" />
-            </a>
-            
             <a
               href="https://github.com"
               target="_blank"

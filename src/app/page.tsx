@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
-import { Shield, AlertTriangle, Wallet, Scan, RotateCcw } from 'lucide-react'
+
 import { Header } from '@/components/Header'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import dynamic from 'next/dynamic'
@@ -23,17 +22,6 @@ export default function HomePage() {
       <Header />
       
       <main className="container mx-auto px-4 py-8 max-w-7xl">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4 flex items-center gap-3">
-            <Shield className="text-primary-500" />
-            Kasplex Revoke
-          </h1>
-          <p className="text-lg text-gray-600">
-            Protect your assets by revoking unnecessary token allowances and NFT approvals on Kasplex.
-            Keep your wallet secure by regularly auditing and removing unused permissions.
-          </p>
-        </div>
-
         <WalletApp />
       </main>
     </div>
