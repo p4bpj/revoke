@@ -114,6 +114,10 @@ export default function WalletApp() {
           errorMessage = 'Transaction was cancelled by user'
         } else if (error.message.includes('insufficient funds')) {
           errorMessage = 'Insufficient funds for gas fees'
+        } else if (error.message.includes('invalid argument 0: json: cannot unmarshal hex string without 0x prefix')) {
+          errorMessage = 'Unable to process the revoke, please retry'
+        } else if (error.message.includes('Failed to fetch') || error.message.includes('fetch')) {
+          errorMessage = 'RPC is not available'
         } else if (error.message.includes('network') || error.message.includes('connection')) {
           errorMessage = 'Network connection error, please try again'
         } else if (error.message.includes('timeout')) {
