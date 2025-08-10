@@ -209,7 +209,7 @@ export default function WalletApp() {
     if (errorCount === 0 && successCount > 0) {
       toast.success(`All ${successCount} approvals revoked successfully`, { id: loadingToast })
     } else if (successCount > 0) {
-      toast.warning(`${successCount} approvals revoked, ${errorCount} failed`, { id: loadingToast })
+      toast.error(`${successCount} approvals revoked, ${errorCount} failed`, { id: loadingToast })
     } else {
       toast.error('All revoke attempts failed', { id: loadingToast })
     }
