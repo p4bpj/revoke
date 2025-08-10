@@ -148,37 +148,72 @@ export default function WalletApp() {
     const loadingToast = toast.loading('Revoking all approvals...')
     let successCount = 0
     let errorCount = 0
-    let cancelledCount = 0
+    const totalCount = approvals.length
+    const revokePromises: Promise<boolean>[] = []
 
-    try {
-      for (const approval of approvals) {
+    // Create individual revoke promises that return success/failure
+    for (const approval of approvals) {
+      const revokePromise = (async () => {
         try {
-          await handleRevoke(approval.tokenAddress, approval.spender, approval.type as 'ERC20' | 'ERC721')
-          successCount++
-          // Small delay to avoid overwhelming the network
-          await new Promise(resolve => setTimeout(resolve, 1000))
-        } catch (error) {
-          if (error instanceof Error && (error.message.includes('User rejected') || error.message.includes('User denied'))) {
-            cancelledCount++
-            // If user cancels one transaction, stop the bulk operation
-            break
-          } else {
-            errorCount++
+          if (!address) return false
+          
+          // Check if user is on correct network
+          if (chainId !== defaultChain.id) {
+            return false
           }
+          
+          let hash: `0x${string}`
+          
+          if (approval.type === 'ERC20') {
+            hash = await writeContract(config, {
+              address: approval.tokenAddress as `0x${string}`,
+              abi: ERC20_ABI,
+              functionName: 'approve',
+              args: [approval.spender as `0x${string}`, BigInt(0)],
+              chainId: defaultChain.id,
+            })
+          } else {
+            hash = await writeContract(config, {
+              address: approval.tokenAddress as `0x${string}`,
+              abi: ERC721_ABI,
+              functionName: 'setApprovalForAll',
+              args: [approval.spender as `0x${string}`, false],
+              chainId: defaultChain.id,
+            })
+          }
+
+          await waitForTransactionReceipt(config, { hash, chainId: defaultChain.id })
+          
+          // Remove from state on success
+          setApprovals(prev => prev.filter(a => 
+            !(a.tokenAddress === approval.tokenAddress && a.spender === approval.spender)
+          ))
+          
+          return true
+        } catch (error) {
+          return false
         }
-      }
+      })()
       
-      if (cancelledCount > 0) {
-        toast.error('Bulk revoke cancelled by user', { id: loadingToast })
-      } else if (errorCount === 0) {
-        toast.success(`All ${successCount} approvals revoked successfully`, { id: loadingToast })
-      } else {
-        toast.success(`${successCount} approvals revoked, ${errorCount} failed`, { id: loadingToast })
-      }
-    } catch (error) {
-      toast.error('Bulk revoke operation failed', { id: loadingToast })
+      revokePromises.push(revokePromise)
+      
+      // Small delay between starting each transaction
+      await new Promise(resolve => setTimeout(resolve, 500))
     }
-  }, [approvals, handleRevoke])
+
+    // Wait for all transactions to complete
+    const results = await Promise.all(revokePromises)
+    successCount = results.filter(success => success).length
+    errorCount = results.filter(success => !success).length
+    
+    if (errorCount === 0 && successCount > 0) {
+      toast.success(`All ${successCount} approvals revoked successfully`, { id: loadingToast })
+    } else if (successCount > 0) {
+      toast.warning(`${successCount} approvals revoked, ${errorCount} failed`, { id: loadingToast })
+    } else {
+      toast.error('All revoke attempts failed', { id: loadingToast })
+    }
+  }, [approvals, handleRevoke, address, chainId])
 
   const dangerousApprovals = approvals.filter(approval => approval.isDangerous)
   const activeApprovals = approvals.filter(approval => !approval.isDangerous)
