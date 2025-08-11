@@ -41,8 +41,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <title>Kasplex Revoke - Token Allowance Manager</title>
-        <meta name="description" content="Revoke your Kasplex token allowances and NFT approvals in one place" />
+        <title>KasClean.app - Kaspa Token Cleaner</title>
+        <meta name="description" content="Clean up your Kaspa token allowances and NFT approvals in one place with KasClean.app" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </head>

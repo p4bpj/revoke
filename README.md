@@ -1,6 +1,6 @@
-# Kasplex Revoke
+# KasClean.app
 
-A token allowance manager for Kasplex (EVM-compatible) blockchain, inspired by [revoke.cash](https://revoke.cash). This application allows users to view and revoke their ERC-20 token allowances and NFT approvals in a single, secure interface.
+A token allowance manager for Kaspa (EVM-compatible) blockchain, inspired by [revoke.cash](https://revoke.cash). This application allows users to view and revoke their ERC-20 token allowances and NFT approvals in a single, secure interface.
 
 ## Features
 
@@ -18,14 +18,14 @@ A token allowance manager for Kasplex (EVM-compatible) blockchain, inspired by [
 
 - Node.js 18.0 or later
 - npm or yarn
-- Access to a Kasplex RPC endpoint
+- Access to a Kaspa RPC endpoint
 
 ### Installation
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/your-username/kasplex-revoke.git
-cd kasplex-revoke
+git clone https://github.com/your-username/kasclean-app.git
+cd kasclean-app
 ```
 
 2. Install dependencies:
@@ -40,7 +40,7 @@ cp .env.example .env.local
 
 4. Configure your environment variables in `.env.local`:
 ```env
-NEXT_PUBLIC_RPC_URL=https://your-kasplex-rpc-url.com
+NEXT_PUBLIC_RPC_URL=https://your-kaspa-rpc-url.com
 NEXT_PUBLIC_CHAIN_ID=your-chain-id
 ```
 
@@ -55,7 +55,7 @@ Open [http://localhost:3000](http://localhost:3000) to view the application.
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `NEXT_PUBLIC_RPC_URL` | Kasplex RPC endpoint URL | `http://127.0.0.1:8545` |
+| `NEXT_PUBLIC_RPC_URL` | Kaspa RPC endpoint URL | `http://127.0.0.1:8545` |
 | `NEXT_PUBLIC_CHAIN_ID` | Chain ID for the network | `1337` |
 | `NEXT_PUBLIC_ENVIRONMENT` | Environment (development/production) | `development` |
 
@@ -73,7 +73,7 @@ Open [http://localhost:3000](http://localhost:3000) to view the application.
 
 1. Build the Docker image:
 ```bash
-docker build -t kasplex-revoke .
+docker build -t kasclean-app .
 ```
 
 2. Run the container:
@@ -81,7 +81,7 @@ docker build -t kasplex-revoke .
 docker run -p 3000:3000 \
   -e NEXT_PUBLIC_RPC_URL=your-rpc-url \
   -e NEXT_PUBLIC_CHAIN_ID=your-chain-id \
-  kasplex-revoke
+  kasclean-app
 ```
 
 ### Manual Deployment
@@ -162,4 +162,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Support
 
-If you encounter any issues or have questions, please [open an issue](https://github.com/your-username/kasplex-revoke/issues) on GitHub.
+If you encounter any issues or have questions, please [open an issue](https://github.com/your-username/kasclean-app/issues) on GitHub.

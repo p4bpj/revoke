@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Deployment script for Kasplex Revoke
+# Deployment script for KasClean.app
 set -e
 
-echo "🚀 Starting Kasplex Revoke deployment..."
+echo "🚀 Starting KasClean.app deployment..."
 
 # Check if required environment variables are set
 if [ -z "$NEXT_PUBLIC_RPC_URL" ]; then
@@ -31,7 +31,7 @@ echo "🔨 Building application..."
 npm run build
 
 echo "✅ Build completed successfully!"
-echo "🎉 Kasplex Revoke is ready for deployment!"
+echo "🎉 KasClean.app is ready for deployment!"
 
 # If running in production, start the server
 if [ "$NODE_ENV" = "production" ]; then

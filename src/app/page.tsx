@@ -33,9 +33,9 @@ export default function HomePage() {
                 <span className="block text-white/90">Kaspa Assets</span>
               </h1>
               <p className="text-xl md:text-2xl text-white/90 max-w-4xl mx-auto leading-relaxed font-lato">
-                When using dApps on Kasplex, you grant them permission to spend your tokens and NFTs. 
-                This is called a token approval. If you don&apos;t revoke these approvals, the dApp can spend your tokens forever. 
-                Take back control by revoking your approvals.
+                              When using dApps on Kaspa, you grant them permission to spend your tokens and NFTs. 
+              This is called a token approval. If you don&apos;t revoke these approvals, the dApp can spend your tokens forever. 
+              Clean up your approvals with KasClean.app.
               </p>
             </div>
             
@@ -101,7 +101,7 @@ export default function HomePage() {
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4 max-w-6xl">
           <h2 className="text-4xl font-oswald font-bold text-kaspa-dark-gray text-center mb-16">
-            Why You Should Use Kasplex Revoke
+            Why You Should Use KasClean.app
           </h2>
           
           <div className="space-y-12">
@@ -109,7 +109,7 @@ export default function HomePage() {
               <div>
                 <h3 className="text-2xl font-oswald font-bold text-kaspa-dark-gray mb-4 flex items-center gap-3">
                   <Eye className="text-kaspa-teal" />
-                  1. Use Kasplex Revoke regularly
+                  1. Use KasClean.app regularly
                 </h3>
                 <p className="text-gray-600 leading-relaxed text-lg">
                   It is always good to limit your approvals whenever you are not actively using a dApp, especially for NFT 
@@ -129,7 +129,7 @@ export default function HomePage() {
               <div className="order-1 md:order-2">
                 <h3 className="text-2xl font-oswald font-bold text-kaspa-dark-gray mb-4 flex items-center gap-3">
                   <AlertTriangle className="text-kaspa-teal" />
-                  2. Use Kasplex Revoke after getting scammed
+                  2. Use KasClean.app after getting scammed
                 </h3>
                 <p className="text-gray-600 leading-relaxed text-lg">
                   Very often, scammers try to trick you into granting them an approval to your funds. Sort your approvals by 
@@ -169,10 +169,10 @@ export default function HomePage() {
           <div className="grid md:grid-cols-2 gap-8">
             <div className="bg-white rounded-xl p-8 shadow-sm">
               <h3 className="text-xl font-oswald font-bold text-kaspa-dark-gray mb-4">
-                Can I use Kasplex Revoke to recover stolen assets?
+                Can I use KasClean.app to recover stolen assets?
               </h3>
               <p className="text-gray-600 leading-relaxed">
-                No. Kasplex Revoke is a <em>preventative</em> tool that helps you practice proper wallet hygiene. By regularly revoking 
+                No. KasClean.app is a <em>preventative</em> tool that helps you practice proper wallet hygiene. By regularly revoking 
                 active approvals you reduce the chances of becoming the victim of approval exploits. But unfortunately it cannot be used to recover any 
                 stolen funds. You should still make sure to revoke the approvals that were used to take your funds so 
                 that they cannot steal more in the future.
@@ -222,13 +222,13 @@ export default function HomePage() {
         <div className="container mx-auto px-4 max-w-6xl text-center">
           <div className="flex items-center justify-center gap-3 mb-4">
             <Shield className="w-8 h-8 text-kaspa-teal" />
-            <h3 className="text-2xl font-rubik font-bold">Kasplex Revoke</h3>
+            <h3 className="text-2xl font-rubik font-bold">KasClean.app</h3>
           </div>
           <p className="text-gray-400 mb-6">
-            Secure your Kasplex assets by managing token approvals and NFT permissions
+            Secure your Kaspa assets by managing token approvals and NFT permissions
           </p>
           <div className="text-sm text-gray-500">
-            Built for the Kasplex ecosystem • Open Source
+            Built for the Kaspa ecosystem • Open Source
           </div>
         </div>
       </footer>

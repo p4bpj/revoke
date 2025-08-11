@@ -12,8 +12,8 @@ export function TopHeader() {
           <div className="flex items-center gap-3">
             <Shield className="w-8 h-8 text-kaspa-teal" />
             <div>
-              <h1 className="font-rubik font-bold text-kaspa-dark-gray">Kasplex Revoke</h1>
-              <p className="text-xs text-kaspa-light-gray">Token Allowance Manager</p>
+              <h1 className="font-rubik font-bold text-kaspa-dark-gray">KasClean.app</h1>
+              <p className="text-xs text-kaspa-light-gray">Kaspa Token Cleaner</p>
             </div>
           </div>
           

@@ -29,8 +29,8 @@ export const wagmiAdapter = new WagmiAdapter({
 
 // App metadata for wallet connection
 const metadata = {
-  name: 'Kasplex Revoke',
-  description: 'Protect your assets by revoking unnecessary token allowances and NFT approvals on Kasplex',
+  name: 'KasClean.app',
+  description: 'Clean up your Kaspa assets by revoking unnecessary token allowances and NFT approvals',
   url: typeof window !== 'undefined' ? window.location.origin : 'https://revoke.kasplex.io',
   icons: [
     typeof window !== 'undefined' 
