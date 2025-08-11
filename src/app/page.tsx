@@ -3,6 +3,7 @@
 import { Shield, Link2, Search, X, AlertTriangle, Lock, Eye, Zap } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { TopHeader } from '@/components/TopHeader'
+import { useWalletConnection } from '@/lib/web3modal'
 
 // Dynamically import the component that uses wagmi hooks to prevent hydration issues
 const WalletApp = dynamic(() => import('@/components/WalletApp'), {
@@ -16,33 +17,37 @@ const WalletApp = dynamic(() => import('@/components/WalletApp'), {
 })
 
 export default function HomePage() {
+  const { isConnected } = useWalletConnection()
+
   return (
     <div className="min-h-screen bg-white">
       <TopHeader />
       
-      {/* Hero Section */}
-      <section className="bg-gradient-to-br from-kaspa-teal to-kaspa-bright-teal text-white py-20">
-        <div className="container mx-auto px-4 text-center max-w-6xl">
-          <div className="mb-8">
-            <h1 className="text-5xl md:text-6xl font-rubik font-bold mb-6">
-              Take Control of Your 
-              <span className="block text-white/90">Kaspa Assets</span>
-            </h1>
-            <p className="text-xl md:text-2xl text-white/90 max-w-4xl mx-auto leading-relaxed font-lato">
-              When using dApps on Kasplex, you grant them permission to spend your tokens and NFTs. 
-              This is called a token approval. If you don&apos;t revoke these approvals, the dApp can spend your tokens forever. 
-              Take back control by revoking your approvals.
-            </p>
+      {/* Hero Section - Only show when wallet is not connected */}
+      {!isConnected && (
+        <section className="bg-gradient-to-br from-kaspa-teal to-kaspa-bright-teal text-white py-20">
+          <div className="container mx-auto px-4 text-center max-w-6xl">
+            <div className="mb-8">
+              <h1 className="text-5xl md:text-6xl font-rubik font-bold mb-6">
+                Take Control of Your 
+                <span className="block text-white/90">Kaspa Assets</span>
+              </h1>
+              <p className="text-xl md:text-2xl text-white/90 max-w-4xl mx-auto leading-relaxed font-lato">
+                When using dApps on Kasplex, you grant them permission to spend your tokens and NFTs. 
+                This is called a token approval. If you don&apos;t revoke these approvals, the dApp can spend your tokens forever. 
+                Take back control by revoking your approvals.
+              </p>
+            </div>
+            
+            <a
+              href="#scanner"
+              className="bg-white text-kaspa-dark-gray font-oswald font-bold text-lg px-8 py-4 rounded-xl hover:bg-gray-100 transition-colors shadow-lg inline-block"
+            >
+              Get Started
+            </a>
           </div>
-          
-          <a
-            href="#scanner"
-            className="bg-white text-kaspa-dark-gray font-oswald font-bold text-lg px-8 py-4 rounded-xl hover:bg-gray-100 transition-colors shadow-lg inline-block"
-          >
-            Get Started
-          </a>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Main App Section */}
       <section id="scanner" className="py-16 bg-gray-50">
