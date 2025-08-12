@@ -7,7 +7,7 @@ import type { TokenApproval } from '@/lib/approvals'
 interface AllowanceTableProps {
   approvals: TokenApproval[]
   onRevoke: (tokenAddress: string, spender: string, type: 'ERC20' | 'ERC721') => Promise<void>
-  onBulkRevoke: () => Promise<void>
+  onBulkRevoke: (excludeRevokingIds: Set<string>) => Promise<void>
   isLoading: boolean
 }
 
@@ -26,9 +26,14 @@ export function AllowanceTable({
       newSet.add(approval.id)
       return newSet
     })
+    
     try {
       await onRevoke(approval.tokenAddress, approval.spender, approval.type as 'ERC20' | 'ERC721')
+    } catch (error) {
+      // Log error for debugging but don't re-throw - loading state will be cleared in finally
+      console.error('Error in handleRevoke:', error)
     } finally {
+      // Always clear loading state regardless of success/failure
       setRevokingIds(prev => {
         const newSet = new Set(prev)
         newSet.delete(approval.id)
@@ -40,7 +45,7 @@ export function AllowanceTable({
   const handleBulkRevoke = async () => {
     setIsBulkRevoking(true)
     try {
-      await onBulkRevoke()
+      await onBulkRevoke(revokingIds)
     } finally {
       setIsBulkRevoking(false)
     }
@@ -86,6 +91,10 @@ export function AllowanceTable({
     )
   }
 
+  // Calculate how many approvals are not currently being revoked
+  const nonRevokingApprovals = approvals.filter(approval => !revokingIds.has(approval.id))
+  const availableToRevoke = nonRevokingApprovals.length
+
   return (
     <div className="space-y-6">
       {/* Bulk Actions */}
@@ -97,7 +106,7 @@ export function AllowanceTable({
           </div>
           <button
             onClick={handleBulkRevoke}
-            disabled={isBulkRevoking || approvals.length === 0}
+            disabled={isBulkRevoking || availableToRevoke === 0}
             className="btn-danger flex items-center gap-2"
           >
             {isBulkRevoking ? (
@@ -108,7 +117,7 @@ export function AllowanceTable({
             ) : (
               <>
                 <RotateCcw className="w-4 h-4" />
-                Revoke All ({approvals.length})
+                Revoke All ({availableToRevoke})
               </>
             )}
           </button>

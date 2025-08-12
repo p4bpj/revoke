@@ -57,7 +57,7 @@ export default function WalletApp() {
       if (chainId !== defaultChain.id) {
         console.error(`Wrong network detected. Current: ${chainId}, Expected: ${defaultChain.id}`)
         toast.error(`Wrong network! Please manually switch to ${defaultChain.name} (Chain ID: ${defaultChain.id}) in your wallet and try again.`, { id: loadingToast })
-        return
+        throw new Error('Wrong network detected')
       }
       
       toast.loading('Revoking approval on Kasplex...', { id: loadingToast })
@@ -129,26 +129,29 @@ export default function WalletApp() {
     }
   }, [address, chainId])
 
-  const handleBulkRevoke = useCallback(async () => {
-    if (approvals.length === 0) {
-      toast.error('No approvals to revoke')
+  const handleBulkRevoke = useCallback(async (excludeRevokingIds: Set<string>) => {
+    // Filter out approvals that are currently being revoked
+    const approvalsToRevoke = approvals.filter(approval => !excludeRevokingIds.has(approval.id))
+    
+    if (approvalsToRevoke.length === 0) {
+      toast.error('No approvals available to revoke')
       return
     }
 
     const confirmed = window.confirm(
-      `Are you sure you want to revoke ALL ${approvals.length} approvals? This will send multiple transactions and may take some time.`
+      `Are you sure you want to revoke ${approvalsToRevoke.length} approvals? This will send multiple transactions and may take some time.`
     )
     
     if (!confirmed) return
 
-    const loadingToast = toast.loading('Revoking all approvals...')
+    const loadingToast = toast.loading(`Revoking ${approvalsToRevoke.length} approvals...`)
     let successCount = 0
     let errorCount = 0
-    const totalCount = approvals.length
+    const totalCount = approvalsToRevoke.length
     const revokePromises: Promise<boolean>[] = []
 
     // Create individual revoke promises that return success/failure
-    for (const approval of approvals) {
+    for (const approval of approvalsToRevoke) {
       const revokePromise = (async () => {
         try {
           if (!address) return false
