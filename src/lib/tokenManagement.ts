@@ -235,7 +235,7 @@ export function checkRateLimit(
   const timeDiff = now.getTime() - lastCall.getTime()
   
   // Rate limits based on risk level
-  const limits = {
+  const limits: Record<string, number> = {
     dangerous: 60 * 60 * 1000, // 1 hour
     critical: 24 * 60 * 60 * 1000 // 24 hours
   }
