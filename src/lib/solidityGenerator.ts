@@ -1,4 +1,4 @@
-import type { ContractConfiguration, GeneratedContract, SecurityWarning, OptimizationSuggestion } from '@/types/deployment'
+import type { ContractConfiguration, GeneratedContract, SecurityWarning, OptimizationSuggestion, RemixDeployment } from '@/types/deployment'
 import { CONTRACT_FEATURES } from './contractFeatures'
 
 export class SolidityGenerator {
