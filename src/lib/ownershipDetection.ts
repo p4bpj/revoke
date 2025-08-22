@@ -115,7 +115,7 @@ async function findTokensByOwnership(
       const tokenAddress = batch[j]
       const ownership = ownershipChecks[j]
       
-      if (ownership.isOwner) {
+      if (ownership.confidence === 100) {
         try {
           const tokenInfo = await getTokenInfo(tokenAddress, chainId)
           if (tokenInfo) {
