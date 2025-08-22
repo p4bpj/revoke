@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useWalletConnection } from '@/lib/web3modal'
 import { getOwnedTokensWithFunctions } from '@/lib/tokenManagement'
 import { OwnedTokensScanner } from './OwnedTokensScanner'
@@ -19,7 +19,7 @@ export function ManagementDashboard() {
   const [error, setError] = useState<string | null>(null)
   const [isScanning, setIsScanning] = useState(false)
 
-  const handleScanTokens = async () => {
+  const handleScanTokens = useCallback(async () => {
     if (!address || !chainId) return
 
     setIsScanning(true)
@@ -39,14 +39,14 @@ export function ManagementDashboard() {
     } finally {
       setIsScanning(false)
     }
-  }
+  }, [address, chainId, selectedToken])
 
   // Auto-scan when wallet connects
   useEffect(() => {
     if (isConnected && address && chainId && ownedTokens.length === 0) {
       handleScanTokens()
     }
-  }, [isConnected, address, chainId])
+  }, [isConnected, address, chainId, ownedTokens.length, handleScanTokens])
 
   if (!isConnected) {
     return (
@@ -61,7 +61,7 @@ export function ManagementDashboard() {
             and configure your smart contracts directly from this interface.
           </p>
           <div className="mt-6 text-sm text-gray-500">
-            ↗️ Click "Connect Wallet" in the top right corner
+            ↗️ Click &quot;Connect Wallet&quot; in the top right corner
           </div>
         </div>
       </div>
@@ -175,7 +175,7 @@ export function ManagementDashboard() {
                       No Management Functions Available
                     </h3>
                     <p className="text-gray-600">
-                      This contract doesn't expose any standard management functions that can be safely executed.
+                      This contract doesn&apos;t expose any standard management functions that can be safely executed.
                     </p>
                   </div>
                 )}
@@ -200,11 +200,11 @@ export function ManagementDashboard() {
             No Owned Tokens Found
           </h3>
           <p className="text-gray-600 mb-4">
-            We couldn't find any tokens that you own or have admin access to. 
+            We couldn&apos;t find any tokens that you own or have admin access to. 
             This could mean:
           </p>
           <ul className="text-gray-600 text-sm space-y-1 max-w-md mx-auto mb-6">
-            <li>• You haven't deployed any smart contracts</li>
+            <li>• You haven&apos;t deployed any smart contracts</li>
             <li>• Your tokens use non-standard ownership patterns</li>
             <li>• The scanning process needs more time to complete</li>
           </ul>

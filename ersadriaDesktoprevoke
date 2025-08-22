@@ -1,0 +1,5 @@
+[33mfe648a4[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfeature/token-management[m[33m)[m Implement complete Token Management feature
+[33m75528f1[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m Fix revoke issues: loading states and bulk revoke filtering
+[33m7f9fba3[m Rebrand application from Kasplex Revoke to KasClean.app
+[33m66fb962[m Hide hero section when wallet is connected
+[33m5cbfb3b[m ✨ UX improvements: Enhanced connection text + subtle button animation
