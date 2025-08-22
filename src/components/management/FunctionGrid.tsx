@@ -48,7 +48,7 @@ export function FunctionGrid({ token, functions }: FunctionGridProps) {
   const riskLevels: RiskLevel[] = ['safe', 'moderate', 'dangerous', 'critical']
 
   const getCategoryTitle = (category: string) => {
-    const titles = {
+    const titles: Record<string, string> = {
       transfer: 'Transfer & Approval',
       mint_burn: 'Mint & Burn',
       access_control: 'Access Control',
