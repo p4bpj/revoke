@@ -7,13 +7,20 @@ export function TransactionHistory() {
   const [isExpanded, setIsExpanded] = useState(false)
   
   // Mock data - would come from actual transaction history
-  const transactions = [
+  const transactions: Array<{
+    hash: string
+    timestamp: Date
+    functionName: string
+    contractAddress: string
+    status: 'pending' | 'success' | 'failed'
+    args: string[]
+  }> = [
     {
       hash: '0x1234...5678',
       timestamp: new Date(Date.now() - 60000),
       functionName: 'Mint Tokens',
       contractAddress: '0xabcd...efgh',
-      status: 'success' as const,
+      status: 'success',
       args: ['0x9876...5432', '1000000000000000000000']
     },
     {
@@ -21,7 +28,7 @@ export function TransactionHistory() {
       timestamp: new Date(Date.now() - 3600000),
       functionName: 'Set Tax Rate',
       contractAddress: '0xabcd...efgh',
-      status: 'failed' as const,
+      status: 'failed',
       args: ['500']
     }
   ]
