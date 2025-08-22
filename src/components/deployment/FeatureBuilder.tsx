@@ -22,7 +22,7 @@ export function FeatureBuilder({
   isGenerating 
 }: FeatureBuilderProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('core')
-  const [validation, setValidation] = useState({ valid: true, errors: [], warnings: [] })
+  const [validation, setValidation] = useState<{ valid: boolean; errors: string[]; warnings: string[] }>({ valid: true, errors: [], warnings: [] })
 
   useEffect(() => {
     const result = validateFeatureSelection(configuration.selectedFeatures)
