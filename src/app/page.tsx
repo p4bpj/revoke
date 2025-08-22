@@ -29,6 +29,16 @@ const ManagementDashboard = dynamic(() => import('@/components/management/Manage
   )
 })
 
+const DeploymentDashboard = dynamic(() => import('@/components/deployment/DeploymentDashboard').then(mod => ({ default: mod.DeploymentDashboard })), {
+  ssr: false,
+  loading: () => (
+    <div className="card max-w-md mx-auto text-center">
+      <div className="w-16 h-16 bg-gray-200 rounded-full mx-auto mb-4 animate-pulse" />
+      <p className="text-gray-600">Loading token deployment...</p>
+    </div>
+  )
+})
+
 export default function HomePage() {
   const { isConnected } = useWalletConnection()
   const [activeTab, setActiveTab] = useState<TabType>('revoke')
@@ -86,6 +96,10 @@ export default function HomePage() {
               
               <TabPanel value="manage" activeTab={activeTab}>
                 <ManagementDashboard />
+              </TabPanel>
+              
+              <TabPanel value="deploy" activeTab={activeTab}>
+                <DeploymentDashboard />
               </TabPanel>
             </>
           )}
