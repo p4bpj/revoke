@@ -5,7 +5,7 @@ import type { ManagementFunction, FunctionInput, RiskLevel } from '@/types/manag
 import { STANDARD_FUNCTIONS } from '@/types/management'
 
 // Function selectors for common management functions
-const FUNCTION_SELECTORS = {
+const FUNCTION_SELECTORS: Record<string, string> = {
   // ERC20 Standard
   'transfer': '0xa9059cbb',
   'approve': '0x095ea7b3',
