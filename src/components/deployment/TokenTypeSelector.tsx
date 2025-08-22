@@ -27,7 +27,7 @@ const TOKEN_TYPES = [
     id: 'ERC721' as TokenStandard,
     name: 'ERC721 NFT',
     description: 'Non-fungible tokens for unique digital assets and collectibles',
-    icon: <Image className="w-8 h-8" />,
+    icon: <Image className="w-8 h-8" aria-label="NFT icon" />,
     color: 'from-purple-500 to-pink-500',
     features: ['Non-fungible', 'Unique IDs', 'Metadata support'],
     useCases: ['Digital art', 'Collectibles', 'Gaming items', 'Certificates'],
