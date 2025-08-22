@@ -194,7 +194,7 @@ async function checkOwnershipBatch(
       const getOwnerResult = getOwnerResults[index]
       
       let isOwner = false
-      let type: 'owner' | 'admin' | 'deployer' | 'multisig_member' = 'owner'
+      let type: 'owner' | 'admin' | 'deployer' | 'multisig' = 'owner'
       
       if (ownerResult?.status === 'success' && ownerResult.result) {
         isOwner = (ownerResult.result as string).toLowerCase() === userAddress.toLowerCase()

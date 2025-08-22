@@ -66,7 +66,7 @@ export interface ContractCapability {
 
 export interface OwnershipInfo {
   address: string;
-  type: 'deployer' | 'owner' | 'admin' | 'multisig_member';
+  type: 'deployer' | 'owner' | 'admin' | 'multisig';
   verificationMethod: 'deployment_tx' | 'owner_call' | 'role_check' | 'multisig_check';
   confidence: number; // 0-100
 }
