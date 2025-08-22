@@ -85,13 +85,13 @@ export async function executeContractFunction(
       abi: [parseAbiItem(plan.functionName + '(...)')], // Simplified ABI
       functionName: plan.functionName as any,
       args: plan.args,
-      chainId: chainId
+      chainId: chainId as 167012
     })
     
     // Wait for confirmation
     await waitForTransactionReceipt(config, { 
       hash, 
-      chainId: chainId 
+      chainId: chainId as 167012 
     })
     
     return {
