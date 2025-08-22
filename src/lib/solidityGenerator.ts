@@ -72,7 +72,7 @@ ${events}
     const imports = new Set<string>()
     
     for (const feature of this.selectedFeatures) {
-      feature.imports.forEach(imp => imports.add(imp))
+      feature.imports.forEach((imp: string) => imports.add(imp))
     }
 
     return Array.from(imports).map(imp => `import "${imp}";`).join('\n')
@@ -82,7 +82,7 @@ ${events}
     const inheritance = new Set<string>()
     
     for (const feature of this.selectedFeatures) {
-      feature.inheritance.forEach(inh => inheritance.add(inh))
+      feature.inheritance.forEach((inh: string) => inheritance.add(inh))
     }
 
     const inheritanceList = Array.from(inheritance)
@@ -228,7 +228,7 @@ ${events}
     const modifiers = new Set<string>()
     
     for (const feature of this.selectedFeatures) {
-      feature.modifiers.forEach(mod => modifiers.add(mod))
+      feature.modifiers.forEach((mod: string) => modifiers.add(mod))
     }
 
     // Add custom modifiers if needed
@@ -248,7 +248,7 @@ ${events}
     const events = new Set<string>()
     
     for (const feature of this.selectedFeatures) {
-      feature.events.forEach(event => events.add(event))
+      feature.events.forEach((event: string) => events.add(event))
     }
 
     return events.size > 0 ? '    ' + Array.from(events).join('\n    ') + '\n' : ''
