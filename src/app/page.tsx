@@ -1,9 +1,12 @@
 'use client'
 
+import { useState } from 'react'
 import { Shield, Link2, Search, X, AlertTriangle, Lock, Eye, Zap } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { TopHeader } from '@/components/TopHeader'
+import { TabNavigation, TabPanel } from '@/components/tabs/TabNavigation'
 import { useWalletConnection } from '@/lib/web3modal'
+import type { TabType } from '@/components/tabs/TabNavigation'
 
 // Dynamically import the component that uses wagmi hooks to prevent hydration issues
 const WalletApp = dynamic(() => import('@/components/WalletApp'), {
@@ -16,8 +19,19 @@ const WalletApp = dynamic(() => import('@/components/WalletApp'), {
   )
 })
 
+const ManagementDashboard = dynamic(() => import('@/components/management/ManagementDashboard').then(mod => ({ default: mod.ManagementDashboard })), {
+  ssr: false,
+  loading: () => (
+    <div className="card max-w-md mx-auto text-center">
+      <div className="w-16 h-16 bg-gray-200 rounded-full mx-auto mb-4 animate-pulse" />
+      <p className="text-gray-600">Loading token management...</p>
+    </div>
+  )
+})
+
 export default function HomePage() {
   const { isConnected } = useWalletConnection()
+  const [activeTab, setActiveTab] = useState<TabType>('revoke')
 
   return (
     <div className="min-h-screen bg-white">
@@ -33,14 +47,14 @@ export default function HomePage() {
                 <span className="block text-white/90">Kaspa Assets</span>
               </h1>
               <p className="text-xl md:text-2xl text-white/90 max-w-4xl mx-auto leading-relaxed font-lato">
-                              When using dApps on Kaspa, you grant them permission to spend your tokens and NFTs. 
-              This is called a token approval. If you don&apos;t revoke these approvals, the dApp can spend your tokens forever. 
-              Clean up your approvals with KasClean.app.
+                When using dApps on Kaspa, you grant them permission to spend your tokens and NFTs. 
+                This is called a token approval. If you don&apos;t revoke these approvals, the dApp can spend your tokens forever. 
+                Clean up your approvals with KasClean.app.
               </p>
             </div>
             
             <a
-              href="#scanner"
+              href="#main-app"
               className="bg-white text-kaspa-dark-gray font-oswald font-bold text-lg px-8 py-4 rounded-xl hover:bg-gray-100 transition-colors shadow-lg inline-block"
             >
               Get Started
@@ -49,10 +63,32 @@ export default function HomePage() {
         </section>
       )}
 
+      {/* Tab Navigation - Only show when wallet is connected */}
+      {isConnected && (
+        <TabNavigation
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          tokensCount={0} // This would be populated from WalletApp state
+          ownedTokensCount={0} // This would be populated from ManagementDashboard state
+        />
+      )}
+
       {/* Main App Section */}
-      <section id="scanner" className="py-16 bg-gray-50">
+      <section id="main-app" className="py-16 bg-gray-50">
         <div className="container mx-auto px-4 max-w-7xl">
-          <WalletApp />
+          {!isConnected ? (
+            <WalletApp />
+          ) : (
+            <>
+              <TabPanel value="revoke" activeTab={activeTab}>
+                <WalletApp />
+              </TabPanel>
+              
+              <TabPanel value="manage" activeTab={activeTab}>
+                <ManagementDashboard />
+              </TabPanel>
+            </>
+          )}
         </div>
       </section>
 
