@@ -215,7 +215,7 @@ function formatFunctionName(functionName: string): string {
 }
 
 function generateFunctionDescription(functionName: string): string {
-  const descriptions = {
+  const descriptions: Record<string, string> = {
     blacklist: 'Prevent an address from making transactions',
     whitelist: 'Allow an address to bypass restrictions',
     setTaxRate: 'Modify the transaction tax percentage',
