@@ -150,10 +150,7 @@ export const CONTRACT_FEATURES: Record<string, ContractFeature> = {
       }`
     ],
     modifiers: [],
-    events: [
-      'event Paused(address account);',
-      'event Unpaused(address account);'
-    ],
+    events: [],
     gasImpact: 80000,
     complexity: 3,
     auditRequired: true,
