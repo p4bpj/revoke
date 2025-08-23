@@ -119,21 +119,24 @@ ${events}
   private generateConstructor(): string {
     const constructorCalls: string[] = []
     const constructorBody: string[] = []
+    const constructorParams: string[] = []
     
-    // Collect constructor calls from features
-    for (const feature of this.selectedFeatures) {
-      constructorCalls.push(...feature.constructor)
-    }
-
-    // Add basic constructor parameters
-    const params: string[] = []
-    
+    // Add constructor parameters based on token standard
     if (this.config.standard === 'ERC20' || this.config.standard === 'ERC721') {
-      // Constructor parameters are handled by parent constructors
+      constructorParams.push('string memory _name', 'string memory _symbol')
     }
 
     if (this.config.standard === 'ERC1155') {
-      // ERC1155 constructor handled by parent
+      constructorParams.push('string memory _uri')
+    }
+    
+    // Collect constructor calls from features and replace placeholders
+    for (const feature of this.selectedFeatures) {
+      const calls = feature.constructor.map(call => {
+        // Replace parameter placeholders with actual parameter names
+        return call.replace('_name', '_name').replace('_symbol', '_symbol').replace('_uri', '_uri')
+      })
+      constructorCalls.push(...calls)
     }
 
     // Add initial supply minting for ERC20
@@ -152,10 +155,11 @@ ${events}
       constructorBody.push(`        taxReceiver = ${this.config.featureParameters.taxReceiver};`)
     }
 
+    const paramsString = constructorParams.length > 0 ? constructorParams.join(', ') : ''
     const constructorCallsString = constructorCalls.length > 0 ? `\n        ${constructorCalls.join('\n        ')}` : ''
     const constructorBodyString = constructorBody.length > 0 ? '\n        ' + constructorBody.join('\n        ') : ''
 
-    return `    constructor()${constructorCallsString} {${constructorBodyString}
+    return `    constructor(${paramsString})${constructorCallsString} {${constructorBodyString}
     }`
   }
 
@@ -418,13 +422,23 @@ ${events}
   private generateConstructorParams(): any[] {
     const params: any[] = []
     
-    // Standard parameters are handled in constructor
-    // Additional runtime parameters would be added here
+    // Add standard parameters based on token type
+    if (this.config.standard === 'ERC20' || this.config.standard === 'ERC721') {
+      params.push(this.config.name || 'MyToken')
+      params.push(this.config.symbol || 'MTK')
+    }
+
+    if (this.config.standard === 'ERC1155') {
+      params.push(this.config.baseURI || 'https://api.example.com/metadata/{id}.json')
+    }
     
     return params
   }
 
   private generateDeploymentScript(): string {
+    const constructorArgs = this.generateConstructorParams()
+    const argsString = constructorArgs.map(arg => `"${arg}"`).join(', ')
+    
     return `// Deployment script for ${this.config.name}
 const { ethers } = require("hardhat");
 
@@ -435,7 +449,7 @@ async function main() {
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
   const ${this.config.name} = await ethers.getContractFactory("${this.config.name}");
-  const token = await ${this.config.name}.deploy();
+  const token = await ${this.config.name}.deploy(${argsString});
 
   await token.deployed();
 
@@ -445,7 +459,7 @@ async function main() {
   if (network.name !== "hardhat" && network.name !== "localhost") {
     console.log("Waiting for block confirmations...");
     await token.deployTransaction.wait(6);
-    await verify(token.address, []);
+    await verify(token.address, [${argsString}]);
   }
 }
 
@@ -473,7 +487,9 @@ main()
   }
 
   private generateVerificationCode(): string {
-    return `npx hardhat verify --network mainnet ${this.config.name} ${this.generateConstructorParams().join(' ')}`
+    const constructorArgs = this.generateConstructorParams()
+    const argsString = constructorArgs.map(arg => `"${arg}"`).join(' ')
+    return `npx hardhat verify --network mainnet CONTRACT_ADDRESS ${argsString}`
   }
 
   private generateId(): string {
