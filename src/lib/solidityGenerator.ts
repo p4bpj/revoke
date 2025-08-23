@@ -94,9 +94,13 @@ ${events}
   private generateStateVariables(): string {
     const variables: string[] = []
     
-    // Add feature-specific state variables
+    // Add feature-specific state variables with proper indentation
     for (const feature of this.selectedFeatures) {
-      variables.push(...feature.stateVariables)
+      for (const variable of feature.stateVariables) {
+        // Ensure proper indentation - add 4 spaces if not already indented
+        const indentedVariable = variable.startsWith('    ') ? variable : `    ${variable}`
+        variables.push(indentedVariable)
+      }
     }
 
     // Add configuration-specific variables
@@ -113,7 +117,37 @@ ${events}
       variables.push(`    string private _baseTokenURI = "${this.config.baseURI}";`)
     }
 
-    return variables.length > 0 ? '    ' + variables.join('\n    ') + '\n' : ''
+    // Add feature parameter-based variables
+    if (this.config.featureParameters) {
+      const params = this.config.featureParameters
+      
+      // Tax feature parameters
+      if (this.config.selectedFeatures.includes('tax')) {
+        if (params.taxRate !== undefined) {
+          variables.push(`    uint256 public taxRate = ${params.taxRate}; // Tax rate in basis points (100 = 1%)`)
+        }
+        if (params.taxReceiver) {
+          variables.push(`    address public taxReceiver = ${params.taxReceiver};`)
+        }
+      }
+      
+      // Deflation feature parameters
+      if (this.config.selectedFeatures.includes('deflation')) {
+        if (params.burnRate !== undefined) {
+          variables.push(`    uint256 public burnRate = ${params.burnRate}; // Burn rate in basis points`)
+        }
+      }
+      
+      // Max transaction/wallet limits
+      if (params.maxTransaction) {
+        variables.push(`    uint256 public maxTransaction = ${params.maxTransaction} * 10**${this.config.decimals || 18};`)
+      }
+      if (params.maxWallet) {
+        variables.push(`    uint256 public maxWallet = ${params.maxWallet} * 10**${this.config.decimals || 18};`)
+      }
+    }
+
+    return variables.length > 0 ? variables.join('\n') + '\n' : ''
   }
 
   private generateConstructor(): string {
@@ -165,16 +199,34 @@ ${events}
 
   private generateFunctions(): string {
     const functions: string[] = []
+    const functionSignatures = new Set<string>() // Track function signatures to avoid duplicates
     
-    // Collect functions from features
+    // Collect functions from features with proper indentation and conflict resolution
     for (const feature of this.selectedFeatures) {
-      functions.push(...feature.functions)
+      for (const func of feature.functions) {
+        // Ensure proper indentation
+        const indentedFunc = this.ensureProperIndentation(func)
+        
+        // Extract function signature for duplicate detection
+        const signature = this.extractFunctionSignature(indentedFunc)
+        
+        if (!functionSignatures.has(signature)) {
+          functions.push(indentedFunc)
+          functionSignatures.add(signature)
+        } else {
+          // Handle function override - later features override earlier ones
+          const existingIndex = functions.findIndex(f => this.extractFunctionSignature(f) === signature)
+          if (existingIndex !== -1) {
+            functions[existingIndex] = indentedFunc // Override with newer implementation
+          }
+        }
+      }
     }
 
-    // Add standard functions based on token type
+    // Add standard functions based on token type (only if not already provided by features)
     if (this.config.standard === 'ERC20') {
-      // Add decimals override if needed
-      if (this.config.decimals !== 18) {
+      // Add decimals override if needed and not already defined
+      if (this.config.decimals !== 18 && !functionSignatures.has('decimals()')) {
         functions.push(`    function decimals() public view virtual override returns (uint8) {
         return ${this.config.decimals};
     }`)
@@ -182,27 +234,33 @@ ${events}
     }
 
     if (this.config.standard === 'ERC721') {
-      // Add minting function
-      functions.push(`    function mint(address to) public onlyOwner {
+      // Add minting function only if not provided by features
+      if (!functionSignatures.has('mint(address)') && !this.config.selectedFeatures.includes('mintable')) {
+        functions.push(`    function mint(address to) public onlyOwner {
         require(currentTokenId < maxTokens, "Max tokens reached");
         uint256 tokenId = currentTokenId++;
         _mint(to, tokenId);
     }`)
+      }
 
-      // Add batch minting
-      functions.push(`    function batchMint(address to, uint256 quantity) public onlyOwner {
+      // Add batch minting only if not provided
+      if (!functionSignatures.has('batchMint(address,uint256)')) {
+        functions.push(`    function batchMint(address to, uint256 quantity) public onlyOwner {
         require(currentTokenId + quantity <= maxTokens, "Would exceed max tokens");
         for (uint256 i = 0; i < quantity; i++) {
             _mint(to, currentTokenId++);
         }
     }`)
+      }
 
-      // Add base URI functions
-      if (this.config.baseURI) {
+      // Add base URI functions if configured and not provided by features
+      if (this.config.baseURI && !functionSignatures.has('_baseURI()')) {
         functions.push(`    function _baseURI() internal view virtual override returns (string memory) {
         return _baseTokenURI;
     }`)
+      }
 
+      if (this.config.baseURI && !functionSignatures.has('setBaseURI(string)')) {
         functions.push(`    function setBaseURI(string calldata baseURI) external onlyOwner {
         _baseTokenURI = baseURI;
     }`)
@@ -210,52 +268,220 @@ ${events}
     }
 
     if (this.config.standard === 'ERC1155') {
-      // Add minting functions for ERC1155
-      functions.push(`    function mint(address to, uint256 id, uint256 amount, bytes memory data) public onlyOwner {
+      // Add minting functions for ERC1155 only if not provided by features
+      if (!functionSignatures.has('mint(address,uint256,uint256,bytes)') && !this.config.selectedFeatures.includes('mintable')) {
+        functions.push(`    function mint(address to, uint256 id, uint256 amount, bytes memory data) public onlyOwner {
         _mint(to, id, amount, data);
     }`)
+      }
 
-      functions.push(`    function mintBatch(address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data) public onlyOwner {
+      if (!functionSignatures.has('mintBatch(address,uint256[],uint256[],bytes)')) {
+        functions.push(`    function mintBatch(address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data) public onlyOwner {
         _mintBatch(to, ids, amounts, data);
+    }`)
+      }
+    }
+
+    // Add utility functions only if not already provided
+    if (!functionSignatures.has('withdraw()')) {
+      functions.push(`    function withdraw() public onlyOwner {
+        payable(owner()).transfer(address(this).balance);
     }`)
     }
 
-    // Add utility functions
-    functions.push(`    function withdraw() public onlyOwner {
-        payable(owner()).transfer(address(this).balance);
-    }`)
+    // Handle complex function conflicts (like multiple _transfer implementations)
+    const resolvedFunctions = this.handleComplexFunctionConflicts(functions)
+    
+    return resolvedFunctions.length > 0 ? resolvedFunctions.join('\n\n') + '\n' : ''
+  }
 
-    return functions.length > 0 ? '    ' + functions.join('\n\n    ') + '\n' : ''
+  private ensureProperIndentation(func: string): string {
+    const lines = func.split('\n')
+    return lines.map(line => {
+      if (line.trim() === '') return line
+      return line.startsWith('    ') ? line : `    ${line}`
+    }).join('\n')
+  }
+
+  private extractFunctionSignature(func: string): string {
+    // Extract function signature from function definition
+    const match = func.match(/function\s+(\w+)\s*\([^)]*\)/)
+    return match ? match[1] + '(' + (func.match(/\(([^)]*)\)/) || ['', ''])[1].replace(/\s+/g, '') + ')' : ''
+  }
+
+  private handleComplexFunctionConflicts(functions: string[]): string[] {
+    // Handle special cases where multiple features need to modify the same function
+    const transferFunctions = functions.filter(f => f.includes('function _transfer('))
+    
+    if (transferFunctions.length > 1) {
+      // Merge multiple _transfer implementations
+      const mergedTransfer = this.mergeTransferFunctions(transferFunctions)
+      // Remove individual transfer functions and add merged one
+      const otherFunctions = functions.filter(f => !f.includes('function _transfer('))
+      return [...otherFunctions, mergedTransfer]
+    }
+    
+    return functions
+  }
+
+  private mergeTransferFunctions(transferFunctions: string[]): string {
+    // Create a comprehensive _transfer function that handles all features
+    const hasReflection = this.config.selectedFeatures.includes('reflection')
+    const hasTax = this.config.selectedFeatures.includes('tax')
+    const hasDeflation = this.config.selectedFeatures.includes('deflation')
+    const hasLimits = this.config.featureParameters?.maxTransaction || this.config.featureParameters?.maxWallet
+    
+    let transferLogic = `    function _transfer(address from, address to, uint256 amount) internal override {
+        require(from != address(0), "ERC20: transfer from the zero address");
+        require(to != address(0), "ERC20: transfer to the zero address");`
+
+    // Add transaction limits
+    if (hasLimits) {
+      if (this.config.featureParameters?.maxTransaction) {
+        transferLogic += `
+        if (from != owner() && to != owner()) {
+            require(amount <= maxTransaction, "Transfer amount exceeds maximum transaction");
+        }`
+      }
+      
+      if (this.config.featureParameters?.maxWallet) {
+        transferLogic += `
+        if (to != owner()) {
+            require(balanceOf(to) + amount <= maxWallet, "Transfer would exceed maximum wallet");
+        }`
+      }
+    }
+
+    // Add tax logic
+    if (hasTax) {
+      transferLogic += `
+        
+        uint256 taxAmount = 0;
+        if (from != owner() && to != owner() && from != address(this) && to != address(this)) {
+            taxAmount = (amount * taxRate) / 10000;
+            if (taxAmount > 0) {
+                super._transfer(from, taxReceiver, taxAmount);
+            }
+        }
+        
+        uint256 transferAmount = amount - taxAmount;`
+    } else {
+      transferLogic += `
+        
+        uint256 transferAmount = amount;`
+    }
+
+    // Add deflation logic
+    if (hasDeflation) {
+      transferLogic += `
+        
+        uint256 burnAmount = 0;
+        if (from != owner() && to != owner()) {
+            burnAmount = (transferAmount * burnRate) / 10000;
+            if (burnAmount > 0) {
+                _burn(from, burnAmount);
+                transferAmount -= burnAmount;
+            }
+        }`
+    }
+
+    // Add reflection logic (simplified)
+    if (hasReflection) {
+      transferLogic += `
+        
+        // Reflection logic - distribute to all holders
+        if (from != owner() && to != owner()) {
+            uint256 reflectionAmount = (transferAmount * reflectionRate) / 10000;
+            if (reflectionAmount > 0) {
+                _distributeReflection(reflectionAmount);
+                transferAmount -= reflectionAmount;
+            }
+        }`
+    }
+
+    transferLogic += `
+        
+        super._transfer(from, to, transferAmount);
+    }`
+
+    return transferLogic
   }
 
   private generateModifiers(): string {
-    const modifiers = new Set<string>()
+    const modifiers: string[] = []
+    const modifierNames = new Set<string>()
     
+    // Collect modifiers from features with proper indentation
     for (const feature of this.selectedFeatures) {
-      feature.modifiers.forEach((mod: string) => modifiers.add(mod))
+      for (const mod of feature.modifiers) {
+        // If it's just a modifier name (like 'onlyOwner'), skip it as it's inherited
+        if (mod.includes('modifier ')) {
+          const indentedMod = this.ensureProperIndentation(mod)
+          const modName = this.extractModifierName(indentedMod)
+          
+          if (!modifierNames.has(modName)) {
+            modifiers.push(indentedMod)
+            modifierNames.add(modName)
+          }
+        }
+      }
     }
 
-    // Add custom modifiers if needed
-    const customModifiers: string[] = []
-    
-    if (this.config.standard === 'ERC721' && this.config.maxTokens) {
-      customModifiers.push(`    modifier validTokenId(uint256 tokenId) {
+    // Add custom modifiers based on configuration
+    if (this.config.standard === 'ERC721' && this.config.maxTokens && !modifierNames.has('validTokenId')) {
+      modifiers.push(`    modifier validTokenId(uint256 tokenId) {
         require(_exists(tokenId), "Token does not exist");
         _;
     }`)
     }
 
-    return customModifiers.length > 0 ? '    ' + customModifiers.join('\n\n    ') + '\n' : ''
+    // Add transaction limit modifiers if configured
+    if (this.config.featureParameters?.maxTransaction && !modifierNames.has('belowMaxTx')) {
+      modifiers.push(`    modifier belowMaxTx(uint256 amount) {
+        require(amount <= maxTransaction, "Transfer amount exceeds maximum transaction");
+        _;
+    }`)
+    }
+
+    // Add wallet limit modifiers if configured  
+    if (this.config.featureParameters?.maxWallet && !modifierNames.has('belowMaxWallet')) {
+      modifiers.push(`    modifier belowMaxWallet(address to, uint256 amount) {
+        require(balanceOf(to) + amount <= maxWallet, "Transfer would exceed maximum wallet");
+        _;
+    }`)
+    }
+
+    return modifiers.length > 0 ? modifiers.join('\n\n') + '\n' : ''
+  }
+
+  private extractModifierName(modifier: string): string {
+    const match = modifier.match(/modifier\s+(\w+)\s*\(/)
+    return match ? match[1] : ''
   }
 
   private generateEvents(): string {
-    const events = new Set<string>()
+    const events: string[] = []
+    const eventSignatures = new Set<string>()
     
+    // Collect events from features with proper indentation
     for (const feature of this.selectedFeatures) {
-      feature.events.forEach((event: string) => events.add(event))
+      for (const event of feature.events) {
+        const indentedEvent = this.ensureProperIndentation(event)
+        const signature = this.extractEventSignature(indentedEvent)
+        
+        if (!eventSignatures.has(signature)) {
+          events.push(indentedEvent)
+          eventSignatures.add(signature)
+        }
+      }
     }
 
-    return events.size > 0 ? '    ' + Array.from(events).join('\n    ') + '\n' : ''
+    return events.length > 0 ? events.join('\n') + '\n' : ''
+  }
+
+  private extractEventSignature(event: string): string {
+    const match = event.match(/event\s+(\w+)\s*\([^)]*\)/)
+    return match ? match[1] + '(' + (event.match(/\(([^)]*)\)/) || ['', ''])[1].replace(/\s+/g, '') + ')' : ''
   }
 
   private getContractDescription(): string {
