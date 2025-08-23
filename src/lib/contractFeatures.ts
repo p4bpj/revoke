@@ -269,7 +269,7 @@ export const CONTRACT_FEATURES: Record<string, ContractFeature> = {
     stateVariables: [],
     constructor: [],
     functions: [
-      `function snapshot() public returns (uint256) {
+      `function snapshot() external returns (uint256) {
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not an admin");
         return _snapshot();
       }`
@@ -490,7 +490,7 @@ export const CONTRACT_FEATURES: Record<string, ContractFeature> = {
     ],
     modifiers: [],
     events: [
-      'event Deflation(uint256 amount);'
+      'event Deflation(uint256 burnAmount);'
     ],
     gasImpact: 120000,
     complexity: 4,

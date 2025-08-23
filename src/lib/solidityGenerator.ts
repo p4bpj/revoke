@@ -659,22 +659,7 @@ ${events}
     const events: string[] = []
     const eventSignatures = new Set<string>()
     
-    // Add standard events based on features
-    if (this.config.selectedFeatures.includes('tax')) {
-      events.push('    event TaxRateUpdated(uint256 oldRate, uint256 newRate);')
-      events.push('    event TaxReceiverUpdated(address oldReceiver, address newReceiver);')
-      events.push('    event TaxExemptionSet(address account, bool exempt);')
-      eventSignatures.add('TaxRateUpdated')
-      eventSignatures.add('TaxReceiverUpdated') 
-      eventSignatures.add('TaxExemptionSet')
-    }
-    
-    if (this.config.selectedFeatures.includes('deflation')) {
-      events.push('    event DeflationaryBurn(address indexed from, uint256 amount);')
-      eventSignatures.add('DeflationaryBurn')
-    }
-    
-    // Collect events from features with proper indentation
+    // Collect events from features with proper indentation (no pre-adding)
     for (const feature of this.selectedFeatures) {
       for (const event of feature.events) {
         const indentedEvent = this.ensureProperIndentation(event)
@@ -692,7 +677,7 @@ ${events}
 
   private extractEventSignature(event: string): string {
     const match = event.match(/event\s+(\w+)\s*\([^)]*\)/)
-    return match ? match[1] + '(' + (event.match(/\(([^)]*)\)/) || ['', ''])[1].replace(/\s+/g, '') + ')' : ''
+    return match ? match[1] : ''
   }
 
   private getContractDescription(): string {
