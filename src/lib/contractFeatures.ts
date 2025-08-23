@@ -150,7 +150,10 @@ export const CONTRACT_FEATURES: Record<string, ContractFeature> = {
       }`
     ],
     modifiers: [],
-    events: [],
+    events: [
+      'event Paused(address account);',
+      'event Unpaused(address account);'
+    ],
     gasImpact: 80000,
     complexity: 3,
     auditRequired: true,
@@ -341,16 +344,6 @@ export const CONTRACT_FEATURES: Record<string, ContractFeature> = {
       `function setTaxExemption(address account, bool exempt) public onlyOwner {
         isExemptFromTax[account] = exempt;
         emit TaxExemptionSet(account, exempt);
-      }`,
-      `function _transfer(address from, address to, uint256 amount) internal override {
-        if (taxRate > 0 && !isExemptFromTax[from] && !isExemptFromTax[to] && taxReceiver != address(0)) {
-          uint256 taxAmount = (amount * taxRate) / 10000;
-          uint256 transferAmount = amount - taxAmount;
-          super._transfer(from, taxReceiver, taxAmount);
-          super._transfer(from, to, transferAmount);
-        } else {
-          super._transfer(from, to, amount);
-        }
       }`
     ],
     modifiers: [],
@@ -467,17 +460,6 @@ export const CONTRACT_FEATURES: Record<string, ContractFeature> = {
       `function setBurnRate(uint256 _burnRate) public onlyOwner {
         require(_burnRate <= 500, "Burn rate too high"); // Max 5%
         burnRate = _burnRate;
-      }`,
-      `function _transfer(address from, address to, uint256 amount) internal override {
-        uint256 burnAmount = (amount * burnRate) / 10000;
-        uint256 transferAmount = amount - burnAmount;
-        
-        if (burnAmount > 0) {
-          _burn(from, burnAmount);
-          emit Deflation(burnAmount);
-        }
-        
-        super._transfer(from, to, transferAmount);
       }`
     ],
     modifiers: [],

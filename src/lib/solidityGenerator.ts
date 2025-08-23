@@ -463,83 +463,96 @@ ${events}
 
     // Add transaction limits
     if (hasLimits) {
+      const ownerCheck = this.config.selectedFeatures.includes('access-control') ? 
+        'hasRole(DEFAULT_ADMIN_ROLE, from) || hasRole(DEFAULT_ADMIN_ROLE, to)' : 
+        'from == owner() || to == owner()'
+      
       if (this.config.featureParameters?.maxTransaction) {
         transferLogic += `
-        if (from != owner() && to != owner()) {
+        if (!(${ownerCheck})) {
             require(amount <= maxTransaction, "Transfer amount exceeds maximum transaction");
         }`
       }
       
       if (this.config.featureParameters?.maxWallet) {
+        const ownerToCheck = this.config.selectedFeatures.includes('access-control') ? 
+          'hasRole(DEFAULT_ADMIN_ROLE, to)' : 'to == owner()'
         transferLogic += `
-        if (to != owner()) {
+        if (!${ownerToCheck}) {
             require(balanceOf(to) + amount <= maxWallet, "Transfer would exceed maximum wallet");
         }`
       }
     }
 
-    // Add tax logic with proper exemption checks
+    let taxLogic = ''
+    let burnLogic = ''
+    
+    // Calculate tax amount
     if (hasTax) {
-      transferLogic += `
-        
+      taxLogic = `
         uint256 taxAmount = 0;
-        uint256 transferAmount = amount;
-        
-        // Apply tax if not exempt and tax rate is set
         if (!isExemptFromTax[from] && !isExemptFromTax[to] && taxRate > 0 && taxReceiver != address(0)) {
             taxAmount = (amount * taxRate) / 10000;
-            transferAmount = amount - taxAmount;
         }`
-    } else {
-      transferLogic += `
-        
-        uint256 transferAmount = amount;`
     }
 
-    // Add deflation logic
+    // Calculate burn amount (from remaining after tax)
     if (hasDeflation) {
-      transferLogic += `
-        
+      const ownerCheck = this.config.selectedFeatures.includes('access-control') ? 
+        'hasRole(DEFAULT_ADMIN_ROLE, from) || hasRole(DEFAULT_ADMIN_ROLE, to)' : 
+        'from == owner() || to == owner()'
+      
+      burnLogic = `
         uint256 burnAmount = 0;
-        if (from != owner() && to != owner()) {
-            burnAmount = (transferAmount * burnRate) / 10000;
-            if (burnAmount > 0) {
-                _burn(from, burnAmount);
-                transferAmount -= burnAmount;
-            }
+        if (!(${ownerCheck}) && burnRate > 0) {
+            uint256 remainingAfterTax = amount${hasTax ? ' - taxAmount' : ''};
+            burnAmount = (remainingAfterTax * burnRate) / 10000;
         }`
     }
 
-    // Add reflection logic (simplified)
-    if (hasReflection) {
-      transferLogic += `
-        
-        // Reflection logic - distribute to all holders
-        if (from != owner() && to != owner()) {
-            uint256 reflectionAmount = (transferAmount * reflectionRate) / 10000;
-            if (reflectionAmount > 0) {
-                _distributeReflection(reflectionAmount);
-                transferAmount -= reflectionAmount;
-            }
-        }`
-    }
+    // Add the logic
+    transferLogic += taxLogic + burnLogic
 
+    // Calculate final transfer amount
     transferLogic += `
         
-        // Execute the actual transfer
-        super._transfer(from, to, transferAmount);`
+        uint256 finalTransferAmount = amount`
+    
+    if (hasTax) {
+      transferLogic += ` - taxAmount`
+    }
+    if (hasDeflation) {
+      transferLogic += ` - burnAmount`
+    }
+    
+    transferLogic += `;`
 
-    // Add tax transfer if applicable
+    // Execute tax transfer first
     if (hasTax) {
       transferLogic += `
         
-        // Transfer tax to receiver if applicable
+        // Transfer tax to receiver
         if (taxAmount > 0) {
             super._transfer(from, taxReceiver, taxAmount);
         }`
     }
 
+    // Execute burn
+    if (hasDeflation) {
+      transferLogic += `
+        
+        // Burn tokens
+        if (burnAmount > 0) {
+            _burn(from, burnAmount);
+            emit Deflation(burnAmount);
+        }`
+    }
+
+    // Execute main transfer
     transferLogic += `
+        
+        // Execute the main transfer
+        super._transfer(from, to, finalTransferAmount);
     }`
 
     return transferLogic
@@ -548,27 +561,29 @@ ${events}
   private generateRequiredOverrides(): string[] {
     const overrides: string[] = []
     
-    // Add _beforeTokenTransfer override if pausable and snapshot are both used
-    if (this.config.selectedFeatures.includes('pausable') && this.config.selectedFeatures.includes('snapshot')) {
+    // Determine which contracts need to be overridden for _beforeTokenTransfer
+    const overrideContracts: string[] = ['ERC20']
+    
+    if (this.config.selectedFeatures.includes('snapshot')) {
+      overrideContracts.push('ERC20Snapshot')
+    }
+    
+    if (this.config.selectedFeatures.includes('permit')) {
+      overrideContracts.push('ERC20Permit')
+    }
+    
+    // Add _beforeTokenTransfer override if needed
+    if (this.config.selectedFeatures.includes('pausable') || 
+        this.config.selectedFeatures.includes('snapshot') || 
+        this.config.selectedFeatures.includes('permit')) {
+      
+      const overrideList = overrideContracts.length > 1 ? `override(${overrideContracts.join(', ')})` : 'override'
+      const pausableModifier = this.config.selectedFeatures.includes('pausable') ? 'whenNotPaused' : ''
+      
       overrides.push(`    function _beforeTokenTransfer(address from, address to, uint256 amount)
         internal
-        whenNotPaused
-        override(ERC20, ERC20Snapshot)
-    {
-        super._beforeTokenTransfer(from, to, amount);
-    }`)
-    } else if (this.config.selectedFeatures.includes('pausable')) {
-      overrides.push(`    function _beforeTokenTransfer(address from, address to, uint256 amount)
-        internal
-        whenNotPaused
-        override
-    {
-        super._beforeTokenTransfer(from, to, amount);
-    }`)
-    } else if (this.config.selectedFeatures.includes('snapshot')) {
-      overrides.push(`    function _beforeTokenTransfer(address from, address to, uint256 amount)
-        internal
-        override(ERC20, ERC20Snapshot)
+        ${pausableModifier}
+        ${overrideList}
     {
         super._beforeTokenTransfer(from, to, amount);
     }`)
