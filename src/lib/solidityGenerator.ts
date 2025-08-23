@@ -166,7 +166,7 @@ ${events}
     
     // Collect constructor calls from features and replace placeholders
     for (const feature of this.selectedFeatures) {
-      const calls = feature.constructor.map(call => {
+      const calls = feature.constructor.map((call: string) => {
         // Replace parameter placeholders with actual parameter names
         return call.replace('_name', '_name').replace('_symbol', '_symbol').replace('_uri', '_uri')
       })
