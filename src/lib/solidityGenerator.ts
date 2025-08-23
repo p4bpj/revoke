@@ -84,7 +84,12 @@ ${events}
     
     // Add feature-specific imports
     for (const feature of this.selectedFeatures) {
-      feature.imports.forEach((imp: string) => imports.add(imp))
+      feature.imports.forEach((imp: string) => {
+        // Filter out deprecated draft-ERC20Permit
+        if (!imp.includes('draft-ERC20Permit')) {
+          imports.add(imp)
+        }
+      })
     }
 
     // Add required imports based on selected features
@@ -258,8 +263,10 @@ ${events}
     // Collect additional constructor calls from features
     for (const feature of this.selectedFeatures) {
       const calls = feature.constructor.map((call: string) => {
-        // Skip base ERC20 and ERC20Permit calls as we handle them above
-        if (call.includes('ERC20(_name, _symbol)') || call.includes('ERC20Permit(_name)')) {
+        // Skip base ERC20, ERC20Permit calls and _grantRole calls as we handle them separately
+        if (call.includes('ERC20(_name, _symbol)') || 
+            call.includes('ERC20Permit(_name)') ||
+            call.includes('_grantRole(DEFAULT_ADMIN_ROLE, msg.sender)')) {
           return ''
         }
         // Replace parameter placeholders with actual parameter names
@@ -396,9 +403,16 @@ ${events}
     // Handle complex function conflicts (like multiple _transfer implementations)
     const resolvedFunctions = this.handleComplexFunctionConflicts(functions)
     
-    // Add required OpenZeppelin overrides
+    // Add required OpenZeppelin overrides (only if not already present)
     const overrideFunctions = this.generateRequiredOverrides()
-    resolvedFunctions.push(...overrideFunctions)
+    const existingOverrides = new Set(resolvedFunctions.map(f => this.extractFunctionSignature(f)))
+    
+    for (const override of overrideFunctions) {
+      const signature = this.extractFunctionSignature(override)
+      if (!existingOverrides.has(signature)) {
+        resolvedFunctions.push(override)
+      }
+    }
     
     return resolvedFunctions.length > 0 ? resolvedFunctions.join('\n\n') + '\n' : ''
   }

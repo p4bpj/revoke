@@ -339,6 +339,7 @@ export const CONTRACT_FEATURES: Record<string, ContractFeature> = {
       }`,
       `function setTaxReceiver(address _taxReceiver) public {
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not an admin");
+        require(_taxReceiver != address(0), "Tax receiver cannot be zero address");
         address oldReceiver = taxReceiver;
         taxReceiver = _taxReceiver;
         emit TaxReceiverUpdated(oldReceiver, _taxReceiver);
@@ -481,6 +482,7 @@ export const CONTRACT_FEATURES: Record<string, ContractFeature> = {
         
         if (burnAmount > 0) {
           _burn(from, burnAmount);
+          emit Deflation(burnAmount);
         }
         
         super._transfer(from, to, transferAmount);
