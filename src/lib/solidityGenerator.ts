@@ -574,14 +574,11 @@ ${events}
       overrideContracts.push('ERC20Snapshot')
     }
     
-    if (this.config.selectedFeatures.includes('permit')) {
-      overrideContracts.push('ERC20Permit')
-    }
+    // Note: ERC20Permit does NOT override _beforeTokenTransfer, so we don't include it
     
     // Add _beforeTokenTransfer override if needed
     if (this.config.selectedFeatures.includes('pausable') || 
-        this.config.selectedFeatures.includes('snapshot') || 
-        this.config.selectedFeatures.includes('permit')) {
+        this.config.selectedFeatures.includes('snapshot')) {
       
       const overrideList = overrideContracts.length > 1 ? `override(${overrideContracts.join(', ')})` : 'override'
       const pausableModifier = this.config.selectedFeatures.includes('pausable') ? 'whenNotPaused' : ''
