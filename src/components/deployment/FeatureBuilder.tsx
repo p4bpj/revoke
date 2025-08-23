@@ -116,12 +116,23 @@ export function FeatureBuilder({
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Initial Supply
+                  <span className="text-xs text-gray-500 block font-normal">
+                    Common ranges: 1M (small), 100M (medium), 1B (large)
+                  </span>
                 </label>
                 <input
-                  type="text"
-                  value={configuration.initialSupply || ''}
-                  onChange={(e) => handleBasicConfigUpdate('initialSupply', e.target.value)}
+                  type="number"
+                  value={configuration.initialSupply || '1000000'}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    // Prevent insanely large numbers (max 1 trillion)
+                    if (parseInt(value) <= 1000000000000) {
+                      handleBasicConfigUpdate('initialSupply', value)
+                    }
+                  }}
                   placeholder="1000000"
+                  min="1"
+                  max="1000000000000"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kaspa-teal focus:border-transparent"
                 />
               </div>
