@@ -71,22 +71,95 @@ ${events}
   private generateImports(): string {
     const imports = new Set<string>()
     
+    // Add base imports based on token standard
+    if (this.config.standard === 'ERC20') {
+      imports.add('@openzeppelin/contracts/token/ERC20/ERC20.sol')
+    }
+    if (this.config.standard === 'ERC721') {
+      imports.add('@openzeppelin/contracts/token/ERC721/ERC721.sol')
+    }
+    if (this.config.standard === 'ERC1155') {
+      imports.add('@openzeppelin/contracts/token/ERC1155/ERC1155.sol')
+    }
+    
+    // Add feature-specific imports
     for (const feature of this.selectedFeatures) {
       feature.imports.forEach((imp: string) => imports.add(imp))
+    }
+
+    // Add required imports based on selected features
+    if (this.config.selectedFeatures.includes('burnable')) {
+      imports.add('@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol')
+    }
+    if (this.config.selectedFeatures.includes('pausable')) {
+      imports.add('@openzeppelin/contracts/security/Pausable.sol')
+    }
+    if (this.config.selectedFeatures.includes('ownable')) {
+      imports.add('@openzeppelin/contracts/access/Ownable.sol')
+    }
+    if (this.config.selectedFeatures.includes('access-control')) {
+      imports.add('@openzeppelin/contracts/access/AccessControl.sol')
+    }
+    if (this.config.selectedFeatures.includes('snapshot')) {
+      imports.add('@openzeppelin/contracts/token/ERC20/extensions/ERC20Snapshot.sol')
+    }
+    if (this.config.selectedFeatures.includes('permit')) {
+      imports.add('@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol')
+    }
+    if (this.config.selectedFeatures.includes('votes')) {
+      imports.add('@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol')
     }
 
     return Array.from(imports).map(imp => `import "${imp}";`).join('\n')
   }
 
   private generateContractDeclaration(): string {
-    const inheritance = new Set<string>()
+    const inheritance: string[] = []
     
-    for (const feature of this.selectedFeatures) {
-      feature.inheritance.forEach((inh: string) => inheritance.add(inh))
+    // Add base token standard first
+    if (this.config.standard === 'ERC20') {
+      inheritance.push('ERC20')
+    } else if (this.config.standard === 'ERC721') {
+      inheritance.push('ERC721')
+    } else if (this.config.standard === 'ERC1155') {
+      inheritance.push('ERC1155')
     }
+    
+    // Add extensions in proper order to avoid conflicts
+    if (this.config.selectedFeatures.includes('burnable')) {
+      inheritance.push('ERC20Burnable')
+    }
+    if (this.config.selectedFeatures.includes('ownable')) {
+      inheritance.push('Ownable')
+    }
+    if (this.config.selectedFeatures.includes('access-control')) {
+      inheritance.push('AccessControl')
+    }
+    if (this.config.selectedFeatures.includes('pausable')) {
+      inheritance.push('Pausable')
+    }
+    if (this.config.selectedFeatures.includes('snapshot')) {
+      inheritance.push('ERC20Snapshot')
+    }
+    if (this.config.selectedFeatures.includes('permit')) {
+      inheritance.push('ERC20Permit')
+    }
+    if (this.config.selectedFeatures.includes('votes')) {
+      inheritance.push('ERC20Votes')
+    }
+    
+    // Add any additional inheritance from features (avoiding duplicates)
+    const additionalInheritance = new Set<string>()
+    for (const feature of this.selectedFeatures) {
+      feature.inheritance.forEach((inh: string) => {
+        if (!inheritance.includes(inh)) {
+          additionalInheritance.add(inh)
+        }
+      })
+    }
+    inheritance.push(...Array.from(additionalInheritance))
 
-    const inheritanceList = Array.from(inheritance)
-    const inheritanceString = inheritanceList.length > 0 ? ` is ${inheritanceList.join(', ')}` : ''
+    const inheritanceString = inheritance.length > 0 ? ` is ${inheritance.join(', ')}` : ''
     
     return `contract ${this.config.name}${inheritanceString}`
   }
@@ -164,12 +237,29 @@ ${events}
       constructorParams.push('string memory _uri')
     }
     
-    // Collect constructor calls from features and replace placeholders
+    // Add constructor calls in proper order
+    if (this.config.standard === 'ERC20' || this.config.standard === 'ERC721') {
+      constructorCalls.push('ERC20(_name, _symbol)')
+    }
+    if (this.config.standard === 'ERC1155') {
+      constructorCalls.push('ERC1155(_uri)')
+    }
+    
+    // Add ERC20Permit constructor if permit feature is enabled
+    if (this.config.selectedFeatures.includes('permit')) {
+      constructorCalls.push('ERC20Permit(_name)')
+    }
+    
+    // Collect additional constructor calls from features
     for (const feature of this.selectedFeatures) {
       const calls = feature.constructor.map((call: string) => {
+        // Skip base ERC20 and ERC20Permit calls as we handle them above
+        if (call.includes('ERC20(_name, _symbol)') || call.includes('ERC20Permit(_name)')) {
+          return ''
+        }
         // Replace parameter placeholders with actual parameter names
         return call.replace('_name', '_name').replace('_symbol', '_symbol').replace('_uri', '_uri')
-      })
+      }).filter(call => call.trim() !== '')
       constructorCalls.push(...calls)
     }
 
@@ -292,6 +382,10 @@ ${events}
     // Handle complex function conflicts (like multiple _transfer implementations)
     const resolvedFunctions = this.handleComplexFunctionConflicts(functions)
     
+    // Add required OpenZeppelin overrides
+    const overrideFunctions = this.generateRequiredOverrides()
+    resolvedFunctions.push(...overrideFunctions)
+    
     return resolvedFunctions.length > 0 ? resolvedFunctions.join('\n\n') + '\n' : ''
   }
 
@@ -352,19 +446,18 @@ ${events}
       }
     }
 
-    // Add tax logic
+    // Add tax logic with proper exemption checks
     if (hasTax) {
       transferLogic += `
         
         uint256 taxAmount = 0;
-        if (from != owner() && to != owner() && from != address(this) && to != address(this)) {
-            taxAmount = (amount * taxRate) / 10000;
-            if (taxAmount > 0) {
-                super._transfer(from, taxReceiver, taxAmount);
-            }
-        }
+        uint256 transferAmount = amount;
         
-        uint256 transferAmount = amount - taxAmount;`
+        // Apply tax if not exempt and tax rate is set
+        if (!isExemptFromTax[from] && !isExemptFromTax[to] && taxRate > 0 && taxReceiver != address(0)) {
+            taxAmount = (amount * taxRate) / 10000;
+            transferAmount = amount - taxAmount;
+        }`
     } else {
       transferLogic += `
         
@@ -401,10 +494,85 @@ ${events}
 
     transferLogic += `
         
-        super._transfer(from, to, transferAmount);
+        // Execute the actual transfer
+        super._transfer(from, to, transferAmount);`
+
+    // Add tax transfer if applicable
+    if (hasTax) {
+      transferLogic += `
+        
+        // Transfer tax to receiver if applicable
+        if (taxAmount > 0) {
+            super._transfer(from, taxReceiver, taxAmount);
+        }`
+    }
+
+    transferLogic += `
     }`
 
     return transferLogic
+  }
+
+  private generateRequiredOverrides(): string[] {
+    const overrides: string[] = []
+    
+    // Add _beforeTokenTransfer override if pausable and snapshot are both used
+    if (this.config.selectedFeatures.includes('pausable') && this.config.selectedFeatures.includes('snapshot')) {
+      overrides.push(`    function _beforeTokenTransfer(address from, address to, uint256 amount)
+        internal
+        whenNotPaused
+        override(ERC20, ERC20Snapshot)
+    {
+        super._beforeTokenTransfer(from, to, amount);
+    }`)
+    } else if (this.config.selectedFeatures.includes('pausable')) {
+      overrides.push(`    function _beforeTokenTransfer(address from, address to, uint256 amount)
+        internal
+        whenNotPaused
+        override
+    {
+        super._beforeTokenTransfer(from, to, amount);
+    }`)
+    } else if (this.config.selectedFeatures.includes('snapshot')) {
+      overrides.push(`    function _beforeTokenTransfer(address from, address to, uint256 amount)
+        internal
+        override(ERC20, ERC20Snapshot)
+    {
+        super._beforeTokenTransfer(from, to, amount);
+    }`)
+    }
+
+    // Add _afterTokenTransfer override if votes is used
+    if (this.config.selectedFeatures.includes('votes')) {
+      overrides.push(`    function _afterTokenTransfer(address from, address to, uint256 amount)
+        internal
+        override(ERC20, ERC20Votes)
+    {
+        super._afterTokenTransfer(from, to, amount);
+    }`)
+    }
+
+    // Add _mint override if votes is used
+    if (this.config.selectedFeatures.includes('votes')) {
+      overrides.push(`    function _mint(address to, uint256 amount)
+        internal
+        override(ERC20, ERC20Votes)
+    {
+        super._mint(to, amount);
+    }`)
+    }
+
+    // Add _burn override if votes is used
+    if (this.config.selectedFeatures.includes('votes')) {
+      overrides.push(`    function _burn(address account, uint256 amount)
+        internal
+        override(ERC20, ERC20Votes)
+    {
+        super._burn(account, amount);
+    }`)
+    }
+
+    return overrides
   }
 
   private generateModifiers(): string {
@@ -462,6 +630,21 @@ ${events}
   private generateEvents(): string {
     const events: string[] = []
     const eventSignatures = new Set<string>()
+    
+    // Add standard events based on features
+    if (this.config.selectedFeatures.includes('tax')) {
+      events.push('    event TaxRateUpdated(uint256 oldRate, uint256 newRate);')
+      events.push('    event TaxReceiverUpdated(address oldReceiver, address newReceiver);')
+      events.push('    event TaxExemptionSet(address account, bool exempt);')
+      eventSignatures.add('TaxRateUpdated')
+      eventSignatures.add('TaxReceiverUpdated') 
+      eventSignatures.add('TaxExemptionSet')
+    }
+    
+    if (this.config.selectedFeatures.includes('deflation')) {
+      events.push('    event DeflationaryBurn(address indexed from, uint256 amount);')
+      eventSignatures.add('DeflationaryBurn')
+    }
     
     // Collect events from features with proper indentation
     for (const feature of this.selectedFeatures) {
