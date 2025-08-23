@@ -250,6 +250,11 @@ ${events}
       constructorCalls.push('ERC20Permit(_name)')
     }
     
+    // Add AccessControl initialization if access-control feature is enabled
+    if (this.config.selectedFeatures.includes('access-control')) {
+      constructorBody.push('        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);')
+    }
+    
     // Collect additional constructor calls from features
     for (const feature of this.selectedFeatures) {
       const calls = feature.constructor.map((call: string) => {
@@ -332,7 +337,8 @@ ${events}
     if (this.config.standard === 'ERC721') {
       // Add minting function only if not provided by features
       if (!functionSignatures.has('mint(address)') && !this.config.selectedFeatures.includes('mintable')) {
-        functions.push(`    function mint(address to) public onlyOwner {
+        const modifier = this.config.selectedFeatures.includes('access-control') ? 'onlyRole(MINTER_ROLE)' : 'onlyOwner'
+        functions.push(`    function mint(address to) public ${modifier} {
         require(currentTokenId < maxTokens, "Max tokens reached");
         uint256 tokenId = currentTokenId++;
         _mint(to, tokenId);
@@ -380,8 +386,10 @@ ${events}
 
     // Add utility functions only if not already provided
     if (!functionSignatures.has('withdraw()')) {
-      functions.push(`    function withdraw() public onlyOwner {
-        payable(owner()).transfer(address(this).balance);
+      const modifier = this.config.selectedFeatures.includes('access-control') ? 'onlyRole(DEFAULT_ADMIN_ROLE)' : 'onlyOwner'
+      const ownerCall = this.config.selectedFeatures.includes('access-control') ? 'msg.sender' : 'owner()'
+      functions.push(`    function withdraw() public ${modifier} {
+        payable(${ownerCall}).transfer(address(this).balance);
     }`)
     }
 
