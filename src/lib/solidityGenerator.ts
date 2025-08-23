@@ -259,7 +259,7 @@ ${events}
         }
         // Replace parameter placeholders with actual parameter names
         return call.replace('_name', '_name').replace('_symbol', '_symbol').replace('_uri', '_uri')
-      }).filter(call => call.trim() !== '')
+      }).filter((call: string) => call.trim() !== '')
       constructorCalls.push(...calls)
     }
 
