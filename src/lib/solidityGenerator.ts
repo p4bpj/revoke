@@ -134,11 +134,12 @@ ${events}
     if (this.config.selectedFeatures.includes('burnable')) {
       inheritance.push('ERC20Burnable')
     }
-    if (this.config.selectedFeatures.includes('ownable')) {
-      inheritance.push('Ownable')
-    }
+    
+    // Choose between Ownable and AccessControl (AccessControl takes precedence)
     if (this.config.selectedFeatures.includes('access-control')) {
       inheritance.push('AccessControl')
+    } else if (this.config.selectedFeatures.includes('ownable')) {
+      inheritance.push('Ownable')
     }
     if (this.config.selectedFeatures.includes('pausable')) {
       inheritance.push('Pausable')
@@ -312,8 +313,11 @@ ${events}
     // Collect functions from features with proper indentation and conflict resolution
     for (const feature of this.selectedFeatures) {
       for (const func of feature.functions) {
+        // Adapt function to the correct access control system
+        let adaptedFunc = this.adaptFunctionToAccessControl(func)
+        
         // Ensure proper indentation
-        const indentedFunc = this.ensureProperIndentation(func)
+        const indentedFunc = this.ensureProperIndentation(adaptedFunc)
         
         // Extract function signature for duplicate detection
         const signature = this.extractFunctionSignature(indentedFunc)
@@ -601,6 +605,29 @@ ${events}
     }
 
     return overrides
+  }
+
+  private adaptFunctionToAccessControl(func: string): string {
+    // If using AccessControl, convert onlyOwner functions to use proper roles
+    if (this.config.selectedFeatures.includes('access-control')) {
+      // Replace onlyOwner with appropriate role-based checks
+      if (func.includes('onlyOwner')) {
+        // Determine which role to use based on function name
+        if (func.includes('function mint(')) {
+          return func.replace('onlyOwner', '').replace('public ', 'public ').replace('{', `{
+        require(hasRole(MINTER_ROLE, msg.sender) || hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a minter");`)
+        } else if (func.includes('function pause(') || func.includes('function unpause(')) {
+          return func.replace('onlyOwner', '').replace('public ', 'public ').replace('{', `{
+        require(hasRole(PAUSER_ROLE, msg.sender) || hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a pauser");`)
+        } else {
+          // Default to admin role for other functions
+          return func.replace('onlyOwner', '').replace('public ', 'public ').replace('{', `{
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not an admin");`)
+        }
+      }
+    }
+    
+    return func
   }
 
   private generateModifiers(): string {

@@ -77,8 +77,7 @@ export const CONTRACT_FEATURES: Record<string, ContractFeature> = {
     stateVariables: [],
     constructor: [],
     functions: [
-      `function mint(address to, uint256 amount) public {
-        require(hasRole(MINTER_ROLE, msg.sender) || hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a minter");
+      `function mint(address to, uint256 amount) public onlyOwner {
         _mint(to, amount);
       }`
     ],
@@ -143,12 +142,10 @@ export const CONTRACT_FEATURES: Record<string, ContractFeature> = {
     stateVariables: [],
     constructor: [],
     functions: [
-      `function pause() public {
-        require(hasRole(PAUSER_ROLE, msg.sender) || hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a pauser");
+      `function pause() public onlyOwner {
         _pause();
       }`,
-      `function unpause() public {
-        require(hasRole(PAUSER_ROLE, msg.sender) || hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a pauser");
+      `function unpause() public onlyOwner {
         _unpause();
       }`
     ],
@@ -269,8 +266,7 @@ export const CONTRACT_FEATURES: Record<string, ContractFeature> = {
     stateVariables: [],
     constructor: [],
     functions: [
-      `function snapshot() external returns (uint256) {
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not an admin");
+      `function snapshot() external onlyOwner returns (uint256) {
         return _snapshot();
       }`
     ],
@@ -330,22 +326,19 @@ export const CONTRACT_FEATURES: Record<string, ContractFeature> = {
     ],
     constructor: [],
     functions: [
-      `function setTaxRate(uint256 _taxRate) public {
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not an admin");
+      `function setTaxRate(uint256 _taxRate) public onlyOwner {
         require(_taxRate <= 1000, "Tax rate too high"); // Max 10%
         uint256 oldRate = taxRate;
         taxRate = _taxRate;
         emit TaxRateUpdated(oldRate, _taxRate);
       }`,
-      `function setTaxReceiver(address _taxReceiver) public {
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not an admin");
+      `function setTaxReceiver(address _taxReceiver) public onlyOwner {
         require(_taxReceiver != address(0), "Tax receiver cannot be zero address");
         address oldReceiver = taxReceiver;
         taxReceiver = _taxReceiver;
         emit TaxReceiverUpdated(oldReceiver, _taxReceiver);
       }`,
-      `function setTaxExemption(address account, bool exempt) public {
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not an admin");
+      `function setTaxExemption(address account, bool exempt) public onlyOwner {
         isExemptFromTax[account] = exempt;
         emit TaxExemptionSet(account, exempt);
       }`,
@@ -471,8 +464,7 @@ export const CONTRACT_FEATURES: Record<string, ContractFeature> = {
     ],
     constructor: [],
     functions: [
-      `function setBurnRate(uint256 _burnRate) public {
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not an admin");
+      `function setBurnRate(uint256 _burnRate) public onlyOwner {
         require(_burnRate <= 500, "Burn rate too high"); // Max 5%
         burnRate = _burnRate;
       }`,
