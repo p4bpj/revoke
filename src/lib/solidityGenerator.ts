@@ -105,9 +105,7 @@ ${events}
     if (this.config.selectedFeatures.includes('access-control')) {
       imports.add('@openzeppelin/contracts/access/AccessControl.sol')
     }
-    if (this.config.selectedFeatures.includes('snapshot')) {
-      imports.add('@openzeppelin/contracts/token/ERC20/extensions/ERC20Snapshot.sol')
-    }
+    // Manual snapshot implementation - avoid ERC20Snapshot version conflicts
     if (this.config.selectedFeatures.includes('permit')) {
       imports.add('@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol')
     }
@@ -144,9 +142,7 @@ ${events}
     if (this.config.selectedFeatures.includes('pausable')) {
       inheritance.push('Pausable')
     }
-    if (this.config.selectedFeatures.includes('snapshot')) {
-      inheritance.push('ERC20Snapshot')
-    }
+    // Skip ERC20Snapshot - using manual implementation to avoid version conflicts
     if (this.config.selectedFeatures.includes('permit')) {
       inheritance.push('ERC20Permit')
     }
@@ -180,6 +176,24 @@ ${events}
         const indentedVariable = variable.startsWith('    ') ? variable : `    ${variable}`
         variables.push(indentedVariable)
       }
+    }
+
+    // Add manual snapshot implementation if snapshot feature is selected
+    if (this.config.selectedFeatures.includes('snapshot')) {
+      // Add SNAPSHOT_ROLE constant if access control is used
+      if (this.config.selectedFeatures.includes('access-control')) {
+        variables.push(`    bytes32 public constant SNAPSHOT_ROLE = keccak256("SNAPSHOT_ROLE");`)
+      }
+      
+      variables.push(`    // Manual snapshot implementation`)
+      variables.push(`    struct SnapshotData {`)
+      variables.push(`        uint256 id;`)
+      variables.push(`        uint256 value;`)
+      variables.push(`    }`)
+      variables.push(`    `)
+      variables.push(`    mapping(address => SnapshotData[]) private _accountBalanceSnapshots;`)
+      variables.push(`    SnapshotData[] private _totalSupplySnapshots;`)
+      variables.push(`    uint256 private _currentSnapshotId = 0;`)
     }
 
     // Add configuration-specific variables
@@ -259,6 +273,17 @@ ${events}
     // Add AccessControl initialization if access-control feature is enabled
     if (this.config.selectedFeatures.includes('access-control')) {
       constructorBody.push('        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);')
+      
+      // Grant additional roles based on features
+      if (this.config.selectedFeatures.includes('mintable')) {
+        constructorBody.push('        _grantRole(MINTER_ROLE, msg.sender);')
+      }
+      if (this.config.selectedFeatures.includes('pausable')) {
+        constructorBody.push('        _grantRole(PAUSER_ROLE, msg.sender);')
+      }
+      if (this.config.selectedFeatures.includes('snapshot')) {
+        constructorBody.push('        _grantRole(SNAPSHOT_ROLE, msg.sender);')
+      }
     }
     
     // Collect additional constructor calls from features
@@ -404,6 +429,14 @@ ${events}
     }`)
     }
 
+    // Add manual snapshot functions if snapshot feature is selected
+    if (this.config.selectedFeatures.includes('snapshot')) {
+      this.addManualSnapshotFunctions(functions, functionSignatures)
+    }
+
+    // Add custom transfer overrides to avoid OpenZeppelin version conflicts
+    this.addCustomTransferOverrides(functions, functionSignatures)
+
     // Handle complex function conflicts (like multiple _transfer implementations)
     const resolvedFunctions = this.handleComplexFunctionConflicts(functions)
     
@@ -433,6 +466,131 @@ ${events}
     // Extract function signature from function definition
     const match = func.match(/function\s+(\w+)\s*\([^)]*\)/)
     return match ? match[1] + '(' + (func.match(/\(([^)]*)\)/) || ['', ''])[1].replace(/\s+/g, '') + ')' : ''
+  }
+
+  private addManualSnapshotFunctions(functions: string[], functionSignatures: Set<string>): void {
+    const roleCheck = this.config.selectedFeatures.includes('access-control') 
+      ? 'require(hasRole(SNAPSHOT_ROLE, msg.sender) || hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller cannot create snapshots");'
+      : 'require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not an admin");'
+
+    if (!functionSignatures.has('snapshot()')) {
+      functions.push(`    function snapshot() external returns (uint256) {
+        ${roleCheck}
+        
+        _currentSnapshotId++;
+        uint256 currentId = _currentSnapshotId;
+        
+        _totalSupplySnapshots.push(SnapshotData(currentId, totalSupply()));
+        
+        emit SnapshotTaken(currentId);
+        return currentId;
+    }`)
+      functionSignatures.add('snapshot()')
+    }
+
+    if (!functionSignatures.has('balanceOfAt(address,uint256)')) {
+      functions.push(`    function balanceOfAt(address account, uint256 snapshotId) public view returns (uint256) {
+        require(snapshotId > 0 && snapshotId <= _currentSnapshotId, "Invalid snapshot id");
+        
+        return _valueAt(snapshotId, _accountBalanceSnapshots[account]);
+    }`)
+      functionSignatures.add('balanceOfAt(address,uint256)')
+    }
+
+    if (!functionSignatures.has('totalSupplyAt(uint256)')) {
+      functions.push(`    function totalSupplyAt(uint256 snapshotId) public view returns (uint256) {
+        require(snapshotId > 0 && snapshotId <= _currentSnapshotId, "Invalid snapshot id");
+        
+        return _valueAt(snapshotId, _totalSupplySnapshots);
+    }`)
+      functionSignatures.add('totalSupplyAt(uint256)')
+    }
+
+    if (!functionSignatures.has('_valueAt(uint256,SnapshotData[])')) {
+      functions.push(`    function _valueAt(uint256 snapshotId, SnapshotData[] storage snapshots) private view returns (uint256) {
+        // Binary search
+        uint256 low = 0;
+        uint256 high = snapshots.length;
+
+        if (high == 0) {
+            return 0;
+        }
+
+        // Check if snapshot exists
+        if (snapshots[high - 1].id < snapshotId) {
+            return 0;
+        }
+
+        while (low < high) {
+            uint256 mid = (low + high) / 2;
+            if (snapshots[mid].id > snapshotId) {
+                high = mid;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        return high == 0 ? 0 : snapshots[high - 1].value;
+    }`)
+      functionSignatures.add('_valueAt(uint256,SnapshotData[])')
+    }
+
+    if (!functionSignatures.has('_updateAccountSnapshot(address)')) {
+      functions.push(`    function _updateAccountSnapshot(address account) private {
+        if (_currentSnapshotId > 0) {
+            uint256 currentBalance = balanceOf(account);
+            SnapshotData[] storage snapshots = _accountBalanceSnapshots[account];
+            
+            if (snapshots.length == 0 || snapshots[snapshots.length - 1].id < _currentSnapshotId) {
+                snapshots.push(SnapshotData(_currentSnapshotId, currentBalance));
+            }
+        }
+    }`)
+      functionSignatures.add('_updateAccountSnapshot(address)')
+    }
+  }
+
+  private addCustomTransferOverrides(functions: string[], functionSignatures: Set<string>): void {
+    const pauseModifier = this.config.selectedFeatures.includes('pausable') ? 'whenNotPausedCustom' : ''
+    
+    // Add custom pause modifier if pausable is enabled
+    if (this.config.selectedFeatures.includes('pausable') && !functionSignatures.has('whenNotPausedCustom')) {
+      functions.push(`    modifier whenNotPausedCustom() {
+        require(!paused(), "Contract is paused");
+        _;
+    }`)
+      functionSignatures.add('whenNotPausedCustom')
+    }
+
+    // Override transfer functions to avoid _beforeTokenTransfer conflicts
+    if (!functionSignatures.has('transfer(address,uint256)')) {
+      const snapshotUpdate = this.config.selectedFeatures.includes('snapshot') 
+        ? `        _updateAccountSnapshot(owner);
+        _updateAccountSnapshot(to);`
+        : ''
+
+      functions.push(`    function transfer(address to, uint256 amount) public virtual override ${pauseModifier} returns (bool) {
+        address owner = _msgSender();
+        _transferWithTaxAndBurn(owner, to, amount);${snapshotUpdate}
+        return true;
+    }`)
+      functionSignatures.add('transfer(address,uint256)')
+    }
+
+    if (!functionSignatures.has('transferFrom(address,address,uint256)')) {
+      const snapshotUpdate = this.config.selectedFeatures.includes('snapshot') 
+        ? `        _updateAccountSnapshot(from);
+        _updateAccountSnapshot(to);`
+        : ''
+
+      functions.push(`    function transferFrom(address from, address to, uint256 amount) public virtual override ${pauseModifier} returns (bool) {
+        address spender = _msgSender();
+        _spendAllowance(from, spender, amount);
+        _transferWithTaxAndBurn(from, to, amount);${snapshotUpdate}
+        return true;
+    }`)
+      functionSignatures.add('transferFrom(address,address,uint256)')
+    }
   }
 
   private handleComplexFunctionConflicts(functions: string[]): string[] {
@@ -576,22 +734,7 @@ ${events}
     
     // Note: ERC20Permit does NOT override _beforeTokenTransfer, so we don't include it
     
-    // Add _beforeTokenTransfer override if needed
-    if (this.config.selectedFeatures.includes('pausable') || 
-        this.config.selectedFeatures.includes('snapshot')) {
-      
-      const overrideList = overrideContracts.length > 1 ? `override(${overrideContracts.join(', ')})` : 'override'
-      const pausableModifier = this.config.selectedFeatures.includes('pausable') ? 'whenNotPaused' : ''
-      
-      const modifierAndOverride = [pausableModifier, overrideList].filter(Boolean).join(' ')
-      
-      overrides.push(`    function _beforeTokenTransfer(address from, address to, uint256 amount)
-        internal
-        ${modifierAndOverride}
-    {
-        super._beforeTokenTransfer(from, to, amount);
-    }`)
-    }
+    // Skip _beforeTokenTransfer override - using custom transfer approach to avoid version conflicts
 
     // Add _afterTokenTransfer override if votes is used
     if (this.config.selectedFeatures.includes('votes')) {
@@ -716,6 +859,12 @@ ${events}
           eventSignatures.add(signature)
         }
       }
+    }
+
+    // Add manual snapshot event if snapshot feature is selected
+    if (this.config.selectedFeatures.includes('snapshot') && !eventSignatures.has('SnapshotTaken')) {
+      events.push('    event SnapshotTaken(uint256 id);')
+      eventSignatures.add('SnapshotTaken')
     }
 
     return events.length > 0 ? events.join('\n') + '\n' : ''
