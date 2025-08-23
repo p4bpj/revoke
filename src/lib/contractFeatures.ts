@@ -331,13 +331,18 @@ export const CONTRACT_FEATURES: Record<string, ContractFeature> = {
     functions: [
       `function setTaxRate(uint256 _taxRate) public onlyOwner {
         require(_taxRate <= 1000, "Tax rate too high"); // Max 10%
+        uint256 oldRate = taxRate;
         taxRate = _taxRate;
+        emit TaxRateUpdated(oldRate, _taxRate);
       }`,
       `function setTaxReceiver(address _taxReceiver) public onlyOwner {
+        address oldReceiver = taxReceiver;
         taxReceiver = _taxReceiver;
+        emit TaxReceiverUpdated(oldReceiver, _taxReceiver);
       }`,
       `function setTaxExemption(address account, bool exempt) public onlyOwner {
         isExemptFromTax[account] = exempt;
+        emit TaxExemptionSet(account, exempt);
       }`,
       `function _transfer(address from, address to, uint256 amount) internal override {
         if (taxRate > 0 && !isExemptFromTax[from] && !isExemptFromTax[to] && taxReceiver != address(0)) {
@@ -353,7 +358,8 @@ export const CONTRACT_FEATURES: Record<string, ContractFeature> = {
     modifiers: [],
     events: [
       'event TaxRateUpdated(uint256 oldRate, uint256 newRate);',
-      'event TaxReceiverUpdated(address oldReceiver, address newReceiver);'
+      'event TaxReceiverUpdated(address oldReceiver, address newReceiver);',
+      'event TaxExemptionSet(address indexed account, bool exempt);'
     ],
     gasImpact: 180000,
     complexity: 6,

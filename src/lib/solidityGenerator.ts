@@ -275,8 +275,14 @@ ${events}
     }
 
     // Tax configuration
-    if (this.config.selectedFeatures.includes('tax') && this.config.featureParameters?.taxReceiver) {
-      constructorBody.push(`        taxReceiver = ${this.config.featureParameters.taxReceiver};`)
+    if (this.config.selectedFeatures.includes('tax')) {
+      // Set owner as tax exempt by default
+      constructorBody.push(`        isExemptFromTax[msg.sender] = true;`)
+      
+      if (this.config.featureParameters?.taxReceiver) {
+        constructorBody.push(`        taxReceiver = ${this.config.featureParameters.taxReceiver};`)
+        constructorBody.push(`        isExemptFromTax[${this.config.featureParameters.taxReceiver}] = true;`)
+      }
     }
 
     const paramsString = constructorParams.length > 0 ? constructorParams.join(', ') : ''
