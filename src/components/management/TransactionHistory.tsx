@@ -102,7 +102,7 @@ export function TransactionHistory() {
 
                 {/* Transaction Link */}
                 <a
-                  href={`https://explorer.kaspa.org/tx/${tx.hash}`}
+                  href={`https://explorer.testnet.kasplextest.xyz/tx/${tx.hash}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-1 hover:bg-gray-100 rounded transition-colors"

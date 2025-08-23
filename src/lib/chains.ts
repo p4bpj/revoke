@@ -1,30 +1,32 @@
 import { defineChain } from 'viem'
 
-// Kasplex chain configuration - replace with actual Kasplex network details
+// Kasplex Mainnet configuration
 export const kasplex = defineChain({
   id: 167012,
-  name: 'Kasplex',
-  network: 'kasplex',
+  name: 'Kasplex Mainnet',
+  network: 'kasplex-mainnet',
   nativeCurrency: {
     decimals: 18,
-    name: 'Kasplex',
+    name: 'Kaspa',
     symbol: 'KAS',
   },
   rpcUrls: {
     default: {
-      http: [process.env.NEXT_PUBLIC_RPC_URL || 'https://rpc.kasplextest.xyz'],
+      http: ['wss://kasplextest.xyz/'],
+      webSocket: ['wss://kasplextest.xyz/'],
     },
     public: {
-      http: [process.env.NEXT_PUBLIC_RPC_URL || 'https://rpc.kasplextest.xyz'],
+      http: ['wss://kasplextest.xyz/'],
+      webSocket: ['wss://kasplextest.xyz/'],
     },
   },
   blockExplorers: {
     default: {
       name: 'Kasplex Explorer',
-      url: 'https://frontend.kasplextest.xyz',
+      url: 'https://explorer.testnet.kasplextest.xyz',
     },
   },
-  testnet: true,
+  testnet: false,
 })
 
 export const supportedChains = [kasplex] as const

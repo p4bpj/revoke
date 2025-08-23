@@ -265,11 +265,11 @@ ETHERSCAN_API_KEY=your_etherscan_key`}
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
           <div className="bg-white p-4 rounded-lg border">
-            <h4 className="font-medium text-gray-900 mb-2">Kaspa Mainnet</h4>
+            <h4 className="font-medium text-gray-900 mb-2">Kasplex Mainnet</h4>
             <div className="space-y-1 text-gray-600">
               <div>Chain ID: 167012</div>
-              <div>RPC: wss://api.kaspa.org</div>
-              <div>Explorer: kaspa.org</div>
+              <div>RPC: wss://kasplextest.xyz/</div>
+              <div>Explorer: https://explorer.testnet.kasplextest.xyz/</div>
             </div>
           </div>
           
