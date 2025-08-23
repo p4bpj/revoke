@@ -439,8 +439,14 @@ ${events}
     // Handle special cases where multiple features need to modify the same function
     const transferFunctions = functions.filter(f => f.includes('function _transfer('))
     
-    if (transferFunctions.length > 1) {
-      // Merge multiple _transfer implementations
+    // Generate comprehensive _transfer if we have tax, deflation, or multiple transfer functions
+    const needsComprehensiveTransfer = 
+      transferFunctions.length > 1 || 
+      this.config.selectedFeatures.includes('tax') || 
+      this.config.selectedFeatures.includes('deflation')
+    
+    if (needsComprehensiveTransfer) {
+      // Merge/create comprehensive _transfer implementation
       const mergedTransfer = this.mergeTransferFunctions(transferFunctions)
       // Remove individual transfer functions and add merged one
       const otherFunctions = functions.filter(f => !f.includes('function _transfer('))
@@ -580,10 +586,11 @@ ${events}
       const overrideList = overrideContracts.length > 1 ? `override(${overrideContracts.join(', ')})` : 'override'
       const pausableModifier = this.config.selectedFeatures.includes('pausable') ? 'whenNotPaused' : ''
       
+      const modifierAndOverride = [pausableModifier, overrideList].filter(Boolean).join(' ')
+      
       overrides.push(`    function _beforeTokenTransfer(address from, address to, uint256 amount)
         internal
-        ${pausableModifier}
-        ${overrideList}
+        ${modifierAndOverride}
     {
         super._beforeTokenTransfer(from, to, amount);
     }`)
